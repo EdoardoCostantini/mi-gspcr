@@ -996,7 +996,8 @@ saveRDS(var_types, "../input/var_types.rds")
                  "never had a paid job",
                  "no formal education",
                  "not allowed to vote",
-                 "other answer (code if volunteered only)"
+                 "other answer (code if volunteered only)",
+                 "don't know"
   )
 
   for (j in 1:ncol(EVS2017)){
