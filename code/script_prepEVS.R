@@ -1053,8 +1053,14 @@ saveRDS(var_types, "../input/var_types.rds")
 
 # Step 9: Save new data --------------------------------------------------------
 
-# Small data for experiments (Complete case data)
-temp <- EVS2017[rowSums(is.na(EVS2017)) == 0, ]
-saveRDS(temp, "../input/ZA7500_processed.rds")
+# Save processed data with NAs
+saveRDS(
+  EVS2017_fc,
+  "../input/ZA7500_processed.rds"
+)
 
-saveRDS(EVS2017_filled, "../input/ZA7500_processed.rds")
+# Small data for experiments (Complete case data)
+saveRDS(
+  EVS2017[rowSums(is.na(EVS2017)) == 0, ],
+  "../input/ZA7500_CC.rds"
+)
