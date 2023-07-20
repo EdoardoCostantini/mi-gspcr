@@ -942,8 +942,6 @@ var_types <- list(
             221:224,
             # years completed education
             242,
-            # Duration of interview
-            "279d_r",
             # Interest in iterview
             280,
             # Size of town interview
