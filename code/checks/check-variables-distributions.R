@@ -13,7 +13,66 @@ EVS <- readRDS("../input/ZA7500_processed.rds")
 # Load variable type map
 var_types <- readRDS("../input/var_types.rds")
 
-# Count data -------------------------------------------------------------------
+# Binary data ------------------------------------------------------------------
+
+var_types$bin
+
+# Define plot space
+par(mfrow = c(3, 3))
+
+# Check the distribution of category options
+for (j in var_types$bin) {
+    barplot(
+        table(na.omit(EVS[, j])),
+        main = j
+    )
+}
+
+# v18 - do you belong to Self-help group, mutual aid group (example extreme case)
+table(EVS[, "v18"])
+
+# Categorical data -------------------------------------------------------------
+
+var_types$cat
+
+# Define plot space
+par(mfrow = c(3, 3))
+
+# Check the distribution of category options
+for (j in var_types$cat) {
+    barplot(
+        table(na.omit(EVS[, j])),
+        main = j
+    )
+}
+
+# mode - #TODO: should have been dropped already
+table(EVS[, "mode"])
+
+# religion - #TODO: should have been dropped already
+table(EVS[, "v52_r"])
+
+# Country born
+table(EVS[, "v228b_r"])
+
+# Ordinal data -----------------------------------------------------------------
+
+var_types$ord
+
+# Define plot space
+par(mfrow = c(3, 3))
+
+# Plot density for each
+for (j in var_types$ord) {
+    plot(
+        density(
+            na.omit(as.numeric(EVS[, j]))
+        ),
+        main = j,
+        xlab = "",
+        ylab = ""
+    )
+}
 
 # Continuous data --------------------------------------------------------------
 
