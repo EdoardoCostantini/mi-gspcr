@@ -9,6 +9,7 @@
 
 # Load evs data
 EVS <- readRDS("../input/ZA7500_processed.rds")
+EVS <- readRDS("../input/ZA7500_fc_processed.rds")
 
 # Load variable type map
 var_types <- readRDS("../input/var_types.rds")

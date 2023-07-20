@@ -7,7 +7,7 @@
 
 # Load data --------------------------------------------------------------------
 
-EVS <- readRDS("../input/ZA7500_processed.rds")
+EVS <- readRDS("../input/ZA7500_fc_processed.rds")
 
 # Work only with some variables
 EVS_gspcr <- EVS[, 1:20]

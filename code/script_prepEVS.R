@@ -1022,19 +1022,10 @@ saveRDS(var_types, "../input/var_types.rds")
     }
   }
 
-# Step 7: Reduce sample size ---------------------------------------------------
-
-  # Select only obs from founding countries
-  EVS2017_fc <- EVS2017 %>%
-    filter(country %in% c("Germany", "Italy", "France", "Belgium", "Netherlands"))
-
-  # Drop levels of country not used
-  EVS2017_fc$country <- droplevels(EVS2017_fc$country)
-
-# Step 8: Make sure variable types ---------------------------------------------
+# Step 7: Make sure variable types ---------------------------------------------
 
 # Create a new data.set to be reordered appropriately
-EVS2017_ord <- EVS2017_fc
+EVS2017_ord <- EVS2017
 
 # > Continuous variables -------------------------------------------------------
 
@@ -1177,12 +1168,31 @@ EVS2017_ord[, var_types$cou] <- sapply(EVS2017_ord[, var_types$cou], function(j)
   as.integer(as.character(j))
 })
 
+# Step 8: Reduce sample size ---------------------------------------------------
+
+# Select only obs from founding countries
+EVS2017_fc <- EVS2017 %>%
+  filter(country %in% c("Germany", "Italy", "France", "Belgium", "Netherlands"))
+
+# Drop levels of country not used
+for(j in 1:ncol(EVS2017_fc)){
+  if(is.factor(EVS2017_fc[, j])){
+    EVS2017_fc[, j] <- droplevels(EVS2017_fc[, j])
+  }
+}
+
 # Step 9: Save new data --------------------------------------------------------
 
 # Save processed data with NAs
 saveRDS(
   EVS2017_ord,
   "../input/ZA7500_processed.rds"
+)
+
+# Save processed data for founding countries with NAs
+saveRDS(
+  EVS2017_fc,
+  "../input/ZA7500_fc_processed.rds"
 )
 
 # Small data for experiments (Complete case data)
