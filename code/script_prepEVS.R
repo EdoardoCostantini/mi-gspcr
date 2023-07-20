@@ -1031,34 +1031,31 @@ saveRDS(var_types, "../input/var_types.rds")
   # Drop levels of country not used
   EVS2017_fc$country <- droplevels(EVS2017_fc$country)
 
-# Step 8: Single imputation ----------------------------------------------------
+# Step 8: Make sure variable types ---------------------------------------------
 
-  # Multiple imputation with pmm of the data
-  imp <- futuremice(
-    data = EVS2017_fc,
-    m = 5,
-    parallelseed = 20220421,
-    n.core = 5,
-    method = "cart",
-    maxit = 25
-  )
+# Binary variables are factors
+all(sapply(EVS2017_fc[, var_types$bin], class) == "factor")
 
-  # Save the results in output
-  saveRDS(imp, "../input/ZA7500_mi.rds")
+# Binary variables have 2 levels
+all(sapply(EVS2017_fc[, var_types$bin], nlevels) == 2)
 
-  # Read if you had saved it already
-  imp <- readRDS("../output/ZA7500_mi.rds")
+# Ordinal variables are factors
+all(sapply(EVS2017_fc[, var_types$ord], class) == "factor")
 
-  # Convergence checks
-  plot.mids_formula <- as.formula(paste0(
-    paste0(colnames(imp$data)[-c(1:2)][1:10],
-           collapse = " + "),
-    " ~ .it | .ms"
-  ))
-  plot(imp, plot.mids_formula, layout = c(2, 5))
+# Ordinal variables are not ordered factors
+all(sapply(EVS2017_fc[, var_types$ord], is.ordered) == FALSE)
 
-  # Extract the first data to use it
-  EVS2017_filled <- complete(imp, 1)
+# Make ordinal variables ordered factors
+EVS2017_fc[, var_types$ord] <- sapply(EVS2017_fc[, var_types$ord], as.ordered)
+prova <- apply(EVS2017_fc[, var_types$ord], 2, as.ordered)
+as.ordered(EVS2017_fc[, var_types$ord[2]])
+
+# Ordinal variables are now ordered factors
+all(sapply(EVS2017_fc[, var_types$ord], is.ordered) == TRUE)
+
+# Identify response options for the variables flagged as ordinal
+sapply(EVS2017_fc[, var_types$ord], levels)
+
 
 # Step 9: Save new data --------------------------------------------------------
 
