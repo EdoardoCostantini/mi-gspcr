@@ -952,14 +952,24 @@ var_types <- list(
           )
   ),
 
+  # continuous
+  con <- paste0(
+    "v",
+    c(
+      # Duration of interview
+      "279d_r"
+    )
+  ),
+
   # count
-  cnts = paste0("v",
-                c(
-                  # Number of children
-                  "239_r",
-                  # People in household
-                  240
-                )
+  cou = paste0(
+    "v",
+    c(
+      # Number of children
+      "239_r",
+      # People in household
+      240
+    )
   )
 )
 
