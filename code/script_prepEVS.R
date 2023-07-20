@@ -2,7 +2,7 @@
 # Objective: Clean and prepare EVS data
 # Author:    Edoardo Costantini
 # Created:   2023-07-11
-# Modified:  2023-07-11
+# Modified:  2023-07-20
 # Notes: 
 
 # Environment ------------------------------------------------------------------
@@ -940,8 +940,6 @@ var_types <- list(
             212:220,
             # What should a society provide?
             221:224,
-            # years completed education
-            242,
             # Interest in iterview
             280,
             # Size of town interview
@@ -951,11 +949,13 @@ var_types <- list(
   ),
 
   # continuous
-  con <- paste0(
+  con = paste0(
     "v",
     c(
       # Duration of interview
-      "279d_r"
+      "279d_r",
+      # years completed education
+      242
     )
   ),
 
@@ -1033,40 +1033,160 @@ saveRDS(var_types, "../input/var_types.rds")
 
 # Step 8: Make sure variable types ---------------------------------------------
 
+# Create a new data.set to be reordered appropriately
+EVS2017_ord <- EVS2017_fc
+
+# > Continuous variables -------------------------------------------------------
+
+# Continuous variables as stored as factors
+sapply(EVS2017_ord[, var_types$con], class)
+
+# Make then numeric
+EVS2017_ord[, var_types$con] <- sapply(EVS2017_ord[, var_types$con], function(j){
+  as.numeric(as.character(j))
+})
+
+# > Binary variables -----------------------------------------------------------
+
 # Binary variables are factors
-all(sapply(EVS2017_fc[, var_types$bin], class) == "factor")
+all(sapply(EVS2017_ord[, var_types$bin], class) == "factor")
 
 # Binary variables have 2 levels
-all(sapply(EVS2017_fc[, var_types$bin], nlevels) == 2)
+all(sapply(EVS2017_ord[, var_types$bin], nlevels) == 2)
+
+# > Ordinal variables ----------------------------------------------------------
 
 # Ordinal variables are factors
-all(sapply(EVS2017_fc[, var_types$ord], class) == "factor")
+all(sapply(EVS2017_ord[, var_types$ord], class) == "factor")
 
 # Ordinal variables are not ordered factors
-all(sapply(EVS2017_fc[, var_types$ord], is.ordered) == FALSE)
-
-# Make ordinal variables ordered factors
-EVS2017_fc[, var_types$ord] <- sapply(EVS2017_fc[, var_types$ord], as.ordered)
-prova <- apply(EVS2017_fc[, var_types$ord], 2, as.ordered)
-as.ordered(EVS2017_fc[, var_types$ord[2]])
-
-# Ordinal variables are now ordered factors
-all(sapply(EVS2017_fc[, var_types$ord], is.ordered) == TRUE)
+all(sapply(EVS2017_ord[, var_types$ord], is.ordered) == FALSE)
 
 # Identify response options for the variables flagged as ordinal
-sapply(EVS2017_fc[, var_types$ord], levels)
+ord_resp <- sapply(EVS2017_ord[, var_types$ord], levels)
 
+# Identify unique response types
+ord_resp_uni <- unique(ord_resp)
+
+# Coding: high to low
+high_low <- c(2:5, 8, 10:12, 19, 24, 26:28, 30, 37:39, 40, 36)
+
+# Coding: low to high
+low_high <- c(1, 6:7, 9, 21, 23, 25, 31, 41, 32:35)
+
+# Coding: Ambivalent
+ambi <- c(13:18, 20, 22, 29)
+
+# > Response option 1: reverse high to low -------------------------------------
+
+# Options
+ord_resp_uni[high_low]
+
+# Which variables have this pattern?
+var_ord_r1 <- names(ord_resp[ord_resp %in% ord_resp_uni[high_low]])
+
+# Create vectors to store checks
+same_values <- NULL
+rev_levels <- NULL
+
+# Apply to every variable with this pattern
+for (j in var_ord_r1) {
+  # Reverse order of levels
+  fac_repl <- factor(
+    x = EVS2017_ord[, j],
+    levels = rev(levels(EVS2017_ord[, j]))
+  )
+
+  # Make the variable as ordered factor
+  fac_ordered <- as.ordered(fac_repl)
+
+  # Replace in original data
+  EVS2017_ord[, j] <- fac_ordered
+
+  # Check values are the same
+  same_values[j] <- all.equal(
+    as.character(EVS2017_fc[, j]),
+    as.character(EVS2017_ord[, j])
+  )
+
+  # Check level order is reversed
+  rev_levels[j] <- all.equal(
+    rev(levels(EVS2017_fc[, j])),
+    levels(EVS2017_ord[, j])
+  )
+}
+
+# Check everything when according to the plan
+all(same_values)
+all(rev_levels)
+
+# > Response option 2: order low to high ---------------------------------------
+
+# Options
+ord_resp_uni[low_high]
+
+# Which variables have this pattern?
+var_ord_r2 <- names(ord_resp[ord_resp %in% ord_resp_uni[low_high]])
+
+# Apply to every variable with this pattern
+for (j in var_ord_r2) {
+
+  # Make the variable as ordered factor
+  fac_ordered <- as.ordered(EVS2017_ord[, j])
+
+  # Replace in original data
+  EVS2017_ord[, j] <- fac_ordered
+
+}
+
+# > Response option 3: ambivalent checks ---------------------------------------
+
+# Identify unique response types
+ord_resp_uni[ambi]
+
+# Temporary decision: just make them ordered as is
+# TODO: make a more informed decision for each
+
+# Which variables have this pattern?
+var_ord_r3 <- names(ord_resp[ord_resp %in% ord_resp_uni[ambi]])
+
+# Apply to every variable with this pattern
+for (j in var_ord_r3) {
+  # Make the variable as ordered factor
+  fac_ordered <- as.ordered(EVS2017_ord[, j])
+
+  # Replace in original data
+  EVS2017_ord[, j] <- fac_ordered
+}
+
+# > Categorical variables ------------------------------------------------------
+
+# categorical variables are factors
+all(sapply(EVS2017_ord[, var_types$cat], class) == "factor")
+
+# categorical variables have more than 2 levels
+all(sapply(EVS2017_ord[, var_types$cat], nlevels) > 2)
+
+# > Count variables ------------------------------------------------------------
+
+# count variables start as factors
+all(sapply(EVS2017_ord[, var_types$cou], class) == "factor")
+
+# but we want them as integer values
+EVS2017_ord[, var_types$cou] <- sapply(EVS2017_ord[, var_types$cou], function(j){
+  as.integer(as.character(j))
+})
 
 # Step 9: Save new data --------------------------------------------------------
 
 # Save processed data with NAs
 saveRDS(
-  EVS2017_fc,
+  EVS2017_ord,
   "../input/ZA7500_processed.rds"
 )
 
 # Small data for experiments (Complete case data)
 saveRDS(
-  EVS2017[rowSums(is.na(EVS2017)) == 0, ],
+  EVS2017_ord[rowSums(is.na(EVS2017_ord)) == 0, ],
   "../input/ZA7500_CC.rds"
 )
