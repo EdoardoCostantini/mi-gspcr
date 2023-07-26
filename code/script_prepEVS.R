@@ -680,12 +680,19 @@
   EVS2017 <- dropVars(EVS2017, age_drop)
 
   # > country born in ----------------------------------------------------------
+  # Note: for interviewee, mother, and father, one question is whether they were
+  # born in the country the interview is taking place. Then, a few folow up apply 
+  # only to the few people for which there is a mismatch. Because of the little 
+  # number of people to whom this applies we drop these follow ups
 
-  # Drop base v228b
-  EVS2017 <- dropVars(EVS2017, "v228b")
+  # Interviewee: only keep dichotomous info in v227
+  EVS2017 <- dropVars(EVS2017, c("v228b_r", "v228b", "v229"))
 
-  # Drop year moved in country as very few cases applicable
-  EVS2017 <- dropVars(EVS2017, "v229")
+  # Father: only keep dichotomous info in v230
+  EVS2017 <- dropVars(EVS2017, "v231")
+
+  # Mother: only keep dichotomous info in v232
+  EVS2017 <- dropVars(EVS2017, "v233")
 
   # > marital status -----------------------------------------------------------
 
@@ -987,7 +994,7 @@ saveRDS(var_types, "../input/var_types.rds")
                  "follow-up non response",
                  "other missing",
                  "item not included",
-                 "not applicable",
+                #  "not applicable",
                  "no answer",
                  "dont know",
                  "does not apply to me",
