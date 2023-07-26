@@ -2,7 +2,7 @@
 # Objective: Clean and prepare EVS data
 # Author:    Edoardo Costantini
 # Created:   2023-07-11
-# Modified:  2023-07-11
+# Modified:  2023-07-20
 # Notes: 
 
 # Environment ------------------------------------------------------------------
@@ -492,6 +492,23 @@
   # Transform to a factor
   EVS2017$v52_r <- factor(EVS2017$v52_r)
 
+  # Proportion of cases in categories
+  prop.table(table(EVS2017$v52_r))
+
+  # Collapse low-frequency categories to others
+  EVS2017$v52_r <- forcats::fct_collapse(
+    EVS2017$v52_r,
+    missing = c("dont know", "no answer"),
+    other = c(
+      "Buddhist",
+      "Free church/Non-conformist/Evangelical",
+      "Hindu",
+      "Jew",
+      "Muslim",
+      "Other"
+    )
+  )
+
   # Drop
   EVS2017 <- dropVars(EVS2017, c("v51", "v52"))
 
@@ -680,12 +697,19 @@
   EVS2017 <- dropVars(EVS2017, age_drop)
 
   # > country born in ----------------------------------------------------------
+  # Note: for interviewee, mother, and father, one question is whether they were
+  # born in the country the interview is taking place. Then, a few folow up apply 
+  # only to the few people for which there is a mismatch. Because of the little 
+  # number of people to whom this applies we drop these follow ups
 
-  # Drop base v228b
-  EVS2017 <- dropVars(EVS2017, "v228b")
+  # Interviewee: only keep dichotomous info in v227
+  EVS2017 <- dropVars(EVS2017, c("v228b_r", "v228b", "v229"))
 
-  # Drop year moved in country as very few cases applicable
-  EVS2017 <- dropVars(EVS2017, "v229")
+  # Father: only keep dichotomous info in v230
+  EVS2017 <- dropVars(EVS2017, c("v231", "v231b_r"))
+
+  # Mother: only keep dichotomous info in v232
+  EVS2017 <- dropVars(EVS2017, c("v233", "v233b_r"))
 
   # > marital status -----------------------------------------------------------
 
@@ -705,7 +729,7 @@
   EVS2017$v239_r <- recode_factor(EVS2017$v239_r, "5 and more" = "5")
   EVS2017$v239_r <- recode_factor(EVS2017$v239_r, "no children" = "0")
 
-  # > leaving in household -----------------------------------------------------
+  # > living in household ------------------------------------------------------
 
   # Recode live alone to 1
   EVS2017$v240 <- recode_factor(EVS2017$v240, "I live alone" = "1")
@@ -787,7 +811,6 @@
     mutate(v280 = replace(x      = v280,
                           list   = v280 == "item not included",
                           values = NA))
-  # EVS2017$v280 <- recode_factor(EVS2017$v280, "item not included" = "NA")
 
   # > language of interview ----------------------------------------------------
 
@@ -848,10 +871,6 @@ var_types <- list(
                    113:114,
                    # Preference among two options (with residual category)
                    204,
-                   # Country of birth
-                   "228b_r",
-                   "231b_r",
-                   "233b_r",
                    # marital status (6 k)
                    234,
                    # living with parent
@@ -940,10 +959,6 @@ var_types <- list(
             212:220,
             # What should a society provide?
             221:224,
-            # years completed education
-            242,
-            # Duration of interview
-            "279d_r",
             # Interest in iterview
             280,
             # Size of town interview
@@ -952,14 +967,26 @@ var_types <- list(
           )
   ),
 
+  # continuous
+  con = paste0(
+    "v",
+    c(
+      # Duration of interview
+      "279d_r",
+      # years completed education
+      242
+    )
+  ),
+
   # count
-  cnts = paste0("v",
-                c(
-                  # Number of children
-                  "239_r",
-                  # People in household
-                  240
-                )
+  cou = paste0(
+    "v",
+    c(
+      # Number of children
+      "239_r",
+      # People in household
+      240
+    )
   )
 )
 
@@ -972,6 +999,84 @@ unlist(var_types)[!unlist(var_types) %in% colnames(EVS2017)]
 # Store variable roles in the input folder
 saveRDS(var_types, "../input/var_types.rds")
 
+# Step 6: Final checks on data -------------------------------------------------
+
+  # Drop empty categories
+  for (j in 1:ncol(EVS2017)) {
+    if (is.factor(EVS2017[, j])) {
+      EVS2017[, j] <- droplevels(EVS2017[, j])
+    }
+  }
+
+  # Store index of variables with not applicable value still recorded
+  not_applicable <- NULL
+  for (j in 1:ncol(EVS2017)) {
+    if (is.factor(EVS2017[, j])) {
+      not_applicable[j] <- "not applicable" %in% levels(EVS2017[, j])
+    }
+  }
+
+  # Check which variables have this
+  not_applicable <- names(EVS2017[, not_applicable])
+
+  # - v109 and v111 -> not applicable if missing value in previous answers
+  #   Action: recode to missing values
+      EVS2017$v109 <- forcats::fct_collapse(
+        EVS2017$v109,
+        missing = "not applicable"
+      )
+      EVS2017$v111 <- forcats::fct_collapse(
+        EVS2017$v111,
+        missing = "not applicable"
+      )
+
+  # - v170 -> Not applicable if not a citizen
+  #   Very few cases
+      EVS2017[EVS2017$v170 == "not applicable", ]
+  #   Action: drop them
+      EVS2017 <- EVS2017[EVS2017$v170 != "not applicable", ]
+
+  # - v174_LR -> unclear not applicable
+  #   Very few cases -> drop them
+      prop.table(table(EVS2017$v174_LR))
+      EVS2017[EVS2017$v174_LR == "not applicable", ]
+  #   Action: drop them
+      EVS2017 <- EVS2017[EVS2017$v174_LR != "not applicable", ]
+
+  # - v175_LR -> not applicable if v174_LR missing
+      EVS2017[EVS2017$v175_LR == "not applicable", c("v174_LR", "v175_LR")]
+  #   Action: recode to missing values
+      EVS2017$v175_LR <- forcats::fct_collapse(
+        EVS2017$v175_LR,
+        missing = "not applicable"
+      )
+
+  # - v246_egp -> people with no jobs should have this not applicable
+      # 10% of the data
+      nrow(EVS2017[EVS2017$v246_egp == "not applicable", ]) / nrow(EVS2017)*100
+
+      # Who are thye?
+      head(EVS2017[EVS2017$v246_egp == "not applicable", ])
+
+      # Cross-tab with employment
+      table(EVS2017$v244, EVS2017$v246_egp)[, "not applicable", drop = FALSE]
+      
+      # Action: all those for whom employment is no answer / don't know should be missing values
+      EVS2017$v246_egp[EVS2017$v244 == "no answer" & EVS2017$v246_egp == "not applicable"] <- NA
+      EVS2017$v246_egp[EVS2017$v244 == "dont know" & EVS2017$v246_egp == "not applicable"] <- NA
+
+  # - v262_ISCED_1: not clear, probably father / mother not known
+  #   Very few cases
+      nrow(EVS2017[EVS2017$v262_ISCED_1 == "not applicable", ])
+  #   Action: recode to missing values
+      EVS2017 <- EVS2017[EVS2017$v262_ISCED_1 != "not applicable", ]
+
+  # - v263_ISCED_1: not clear, probably father / mother not known
+  #   Very few cases
+      nrow(EVS2017[EVS2017$v263_ISCED_1 == "not applicable", ])
+  #   Action: recode to missing values
+      EVS2017 <- EVS2017[EVS2017$v263_ISCED_1 != "not applicable", ]
+
 # Step 5: Missing cases --------------------------------------------------------
 
   NA_labels <- c("multiple answers Mail",
@@ -979,14 +1084,16 @@ saveRDS(var_types, "../input/var_types.rds")
                  "follow-up non response",
                  "other missing",
                  "item not included",
-                 "not applicable",
+                #  "not applicable",
                  "no answer",
                  "dont know",
                  "does not apply to me",
                  "never had a paid job",
                  "no formal education",
                  "not allowed to vote",
-                 "other answer (code if volunteered only)"
+                 "other answer (code if volunteered only)",
+                 "don't know",
+                 "missing" # for values coded as missing by me
   )
 
   for (j in 1:ncol(EVS2017)){
@@ -999,68 +1106,185 @@ saveRDS(var_types, "../input/var_types.rds")
     }
   }
 
-  # Complete cases
-  sum(rowSums(is.na(EVS2017)) == 0)
-
-  EVS2017[rowSums(is.na(EVS2017)) == 0, ]
-
-# Step 6: Final checks on data -------------------------------------------------
-
-  # Drop empty categories
-  for (j in 1:ncol(EVS2017)){
-    if(is.factor(EVS2017[, j])){
+  # Drop empty categories again
+  for (j in 1:ncol(EVS2017)) {
+    if (is.factor(EVS2017[, j])) {
       EVS2017[, j] <- droplevels(EVS2017[, j])
     }
   }
 
-# Step 7: Reduce sample size ---------------------------------------------------
+# Step 7: Make sure variable types ---------------------------------------------
 
-  # Select only obs from founding countries
-  EVS2017_fc <- EVS2017 %>%
-    filter(country %in% c("Germany", "Italy", "France", "Belgium", "Netherlands"))
+# Create a new data.set to be reordered appropriately
+EVS2017_ord <- EVS2017
 
-  # Drop levels of country not used
-  EVS2017_fc$country <- droplevels(EVS2017_fc$country)
+# > Continuous variables -------------------------------------------------------
 
-# Step 8: Single imputation ----------------------------------------------------
+# Continuous variables as stored as factors
+sapply(EVS2017_ord[, var_types$con], class)
 
-  # Multiple imputation with pmm of the data
-  imp <- futuremice(
-    data = EVS2017_fc,
-    m = 5,
-    parallelseed = 20220421,
-    n.core = 5,
-    method = "cart",
-    maxit = 25
+# Make then numeric
+EVS2017_ord[, var_types$con] <- sapply(EVS2017_ord[, var_types$con], function(j){
+  as.numeric(as.character(j))
+})
+
+# > Binary variables -----------------------------------------------------------
+
+# Binary variables are factors
+all(sapply(EVS2017_ord[, var_types$bin], class) == "factor")
+
+# Binary variables have 2 levels
+all(sapply(EVS2017_ord[, var_types$bin], nlevels) == 2)
+
+# > Ordinal variables ----------------------------------------------------------
+
+# Ordinal variables are factors
+all(sapply(EVS2017_ord[, var_types$ord], class) == "factor")
+
+# Ordinal variables are not ordered factors
+all(sapply(EVS2017_ord[, var_types$ord], is.ordered) == FALSE)
+
+# Identify response options for the variables flagged as ordinal
+ord_resp <- sapply(EVS2017_ord[, var_types$ord], levels)
+
+# Identify unique response types
+ord_resp_uni <- unique(ord_resp)
+
+# Coding: high to low
+high_low <- c(2:5, 8, 10:12, 19, 24, 26:28, 30, 37:39, 40, 36)
+
+# Coding: low to high
+low_high <- c(1, 6:7, 9, 21, 23, 25, 31, 41, 32:35)
+
+# Coding: Ambivalent
+ambi <- c(13:18, 20, 22, 29)
+
+# > Response option 1: reverse high to low -------------------------------------
+
+# Options
+ord_resp_uni[high_low]
+
+# Which variables have this pattern?
+var_ord_r1 <- names(ord_resp[ord_resp %in% ord_resp_uni[high_low]])
+
+# Create vectors to store checks
+same_values <- NULL
+rev_levels <- NULL
+
+# Apply to every variable with this pattern
+for (j in var_ord_r1) {
+  # Reverse order of levels
+  fac_repl <- factor(
+    x = EVS2017_ord[, j],
+    levels = rev(levels(EVS2017_ord[, j]))
   )
 
-  # Save the results in output
-  saveRDS(imp, "../input/ZA7500_mi.rds")
+  # Make the variable as ordered factor
+  fac_ordered <- as.ordered(fac_repl)
 
-  # Read if you had saved it already
-  imp <- readRDS("../output/ZA7500_mi.rds")
+  # Replace in original data
+  EVS2017_ord[, j] <- fac_ordered
 
-  # Convergence checks
-  plot.mids_formula <- as.formula(paste0(
-    paste0(colnames(imp$data)[-c(1:2)][1:10],
-           collapse = " + "),
-    " ~ .it | .ms"
-  ))
-  plot(imp, plot.mids_formula, layout = c(2, 5))
+  # Check values are the same
+  same_values[j] <- all.equal(
+    as.character(EVS2017[, j]),
+    as.character(EVS2017_ord[, j])
+  )
 
-  # Extract the first data to use it
-  EVS2017_filled <- complete(imp, 1)
+  # Check level order is reversed
+  rev_levels[j] <- all.equal(
+    rev(levels(EVS2017[, j])),
+    levels(EVS2017_ord[, j])
+  )
+}
+
+# Check everything when according to the plan
+all(same_values)
+all(rev_levels)
+
+# > Response option 2: order low to high ---------------------------------------
+
+# Options
+ord_resp_uni[low_high]
+
+# Which variables have this pattern?
+var_ord_r2 <- names(ord_resp[ord_resp %in% ord_resp_uni[low_high]])
+
+# Apply to every variable with this pattern
+for (j in var_ord_r2) {
+
+  # Make the variable as ordered factor
+  fac_ordered <- as.ordered(EVS2017_ord[, j])
+
+  # Replace in original data
+  EVS2017_ord[, j] <- fac_ordered
+
+}
+
+# > Response option 3: ambivalent checks ---------------------------------------
+
+# Identify unique response types
+ord_resp_uni[ambi]
+
+# Which variables have this pattern?
+var_ord_r3 <- names(ord_resp[ord_resp %in% ord_resp_uni[ambi]])
+
+# Apply to every variable with this pattern
+for (j in var_ord_r3) {
+  # Make the variable as ordered factor
+  fac_ordered <- as.ordered(EVS2017_ord[, j])
+
+  # Replace in original data
+  EVS2017_ord[, j] <- fac_ordered
+}
+
+# > Categorical variables ------------------------------------------------------
+
+# categorical variables are factors
+all(sapply(EVS2017_ord[, var_types$cat], class) == "factor")
+
+# categorical variables have more than 2 levels
+all(sapply(EVS2017_ord[, var_types$cat], nlevels) > 2)
+
+# > Count variables ------------------------------------------------------------
+
+# count variables start as factors
+all(sapply(EVS2017_ord[, var_types$cou], class) == "factor")
+
+# but we want them as integer values
+EVS2017_ord[, var_types$cou] <- sapply(EVS2017_ord[, var_types$cou], function(j){
+  as.integer(as.character(j))
+})
+
+# Step 8: Reduce sample size ---------------------------------------------------
+
+# Select only obs from founding countries
+EVS2017_fc <- EVS2017 %>%
+  filter(country %in% c("Germany", "Italy", "France", "Belgium", "Netherlands"))
+
+# Drop levels of country not used
+for(j in 1:ncol(EVS2017_fc)){
+  if(is.factor(EVS2017_fc[, j])){
+    EVS2017_fc[, j] <- droplevels(EVS2017_fc[, j])
+  }
+}
 
 # Step 9: Save new data --------------------------------------------------------
 
 # Save processed data with NAs
 saveRDS(
-  EVS2017_fc,
+  EVS2017_ord,
   "../input/ZA7500_processed.rds"
+)
+
+# Save processed data for founding countries with NAs
+saveRDS(
+  EVS2017_fc,
+  "../input/ZA7500_fc_processed.rds"
 )
 
 # Small data for experiments (Complete case data)
 saveRDS(
-  EVS2017[rowSums(is.na(EVS2017)) == 0, ],
+  EVS2017_ord[rowSums(is.na(EVS2017_ord)) == 0, ],
   "../input/ZA7500_CC.rds"
 )
