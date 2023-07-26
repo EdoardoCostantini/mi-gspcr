@@ -492,6 +492,23 @@
   # Transform to a factor
   EVS2017$v52_r <- factor(EVS2017$v52_r)
 
+  # Proportion of cases in categories
+  prop.table(table(EVS2017$v52_r))
+
+  # Collapse low-frequency categories to others
+  EVS2017$v52_r <- forcats::fct_collapse(
+    EVS2017$v52_r,
+    missing = c("dont know", "no answer"),
+    other = c(
+      "Buddhist",
+      "Free church/Non-conformist/Evangelical",
+      "Hindu",
+      "Jew",
+      "Muslim",
+      "Other"
+    )
+  )
+
   # Drop
   EVS2017 <- dropVars(EVS2017, c("v51", "v52"))
 
@@ -680,12 +697,19 @@
   EVS2017 <- dropVars(EVS2017, age_drop)
 
   # > country born in ----------------------------------------------------------
+  # Note: for interviewee, mother, and father, one question is whether they were
+  # born in the country the interview is taking place. Then, a few folow up apply 
+  # only to the few people for which there is a mismatch. Because of the little 
+  # number of people to whom this applies we drop these follow ups
 
-  # Drop base v228b
-  EVS2017 <- dropVars(EVS2017, "v228b")
+  # Interviewee: only keep dichotomous info in v227
+  EVS2017 <- dropVars(EVS2017, c("v228b_r", "v228b", "v229"))
 
-  # Drop year moved in country as very few cases applicable
-  EVS2017 <- dropVars(EVS2017, "v229")
+  # Father: only keep dichotomous info in v230
+  EVS2017 <- dropVars(EVS2017, c("v231", "v231b_r"))
+
+  # Mother: only keep dichotomous info in v232
+  EVS2017 <- dropVars(EVS2017, c("v233", "v233b_r"))
 
   # > marital status -----------------------------------------------------------
 
@@ -705,7 +729,7 @@
   EVS2017$v239_r <- recode_factor(EVS2017$v239_r, "5 and more" = "5")
   EVS2017$v239_r <- recode_factor(EVS2017$v239_r, "no children" = "0")
 
-  # > leaving in household -----------------------------------------------------
+  # > living in household ------------------------------------------------------
 
   # Recode live alone to 1
   EVS2017$v240 <- recode_factor(EVS2017$v240, "I live alone" = "1")
@@ -787,7 +811,6 @@
     mutate(v280 = replace(x      = v280,
                           list   = v280 == "item not included",
                           values = NA))
-  # EVS2017$v280 <- recode_factor(EVS2017$v280, "item not included" = "NA")
 
   # > language of interview ----------------------------------------------------
 
@@ -848,10 +871,6 @@ var_types <- list(
                    113:114,
                    # Preference among two options (with residual category)
                    204,
-                   # Country of birth
-                   "228b_r",
-                   "231b_r",
-                   "233b_r",
                    # marital status (6 k)
                    234,
                    # living with parent
@@ -980,6 +999,84 @@ unlist(var_types)[!unlist(var_types) %in% colnames(EVS2017)]
 # Store variable roles in the input folder
 saveRDS(var_types, "../input/var_types.rds")
 
+# Step 6: Final checks on data -------------------------------------------------
+
+  # Drop empty categories
+  for (j in 1:ncol(EVS2017)) {
+    if (is.factor(EVS2017[, j])) {
+      EVS2017[, j] <- droplevels(EVS2017[, j])
+    }
+  }
+
+  # Store index of variables with not applicable value still recorded
+  not_applicable <- NULL
+  for (j in 1:ncol(EVS2017)) {
+    if (is.factor(EVS2017[, j])) {
+      not_applicable[j] <- "not applicable" %in% levels(EVS2017[, j])
+    }
+  }
+
+  # Check which variables have this
+  not_applicable <- names(EVS2017[, not_applicable])
+
+  # - v109 and v111 -> not applicable if missing value in previous answers
+  #   Action: recode to missing values
+      EVS2017$v109 <- forcats::fct_collapse(
+        EVS2017$v109,
+        missing = "not applicable"
+      )
+      EVS2017$v111 <- forcats::fct_collapse(
+        EVS2017$v111,
+        missing = "not applicable"
+      )
+
+  # - v170 -> Not applicable if not a citizen
+  #   Very few cases
+      EVS2017[EVS2017$v170 == "not applicable", ]
+  #   Action: drop them
+      EVS2017 <- EVS2017[EVS2017$v170 != "not applicable", ]
+
+  # - v174_LR -> unclear not applicable
+  #   Very few cases -> drop them
+      prop.table(table(EVS2017$v174_LR))
+      EVS2017[EVS2017$v174_LR == "not applicable", ]
+  #   Action: drop them
+      EVS2017 <- EVS2017[EVS2017$v174_LR != "not applicable", ]
+
+  # - v175_LR -> not applicable if v174_LR missing
+      EVS2017[EVS2017$v175_LR == "not applicable", c("v174_LR", "v175_LR")]
+  #   Action: recode to missing values
+      EVS2017$v175_LR <- forcats::fct_collapse(
+        EVS2017$v175_LR,
+        missing = "not applicable"
+      )
+
+  # - v246_egp -> people with no jobs should have this not applicable
+      # 10% of the data
+      nrow(EVS2017[EVS2017$v246_egp == "not applicable", ]) / nrow(EVS2017)*100
+
+      # Who are thye?
+      head(EVS2017[EVS2017$v246_egp == "not applicable", ])
+
+      # Cross-tab with employment
+      table(EVS2017$v244, EVS2017$v246_egp)[, "not applicable", drop = FALSE]
+      
+      # Action: all those for whom employment is no answer / don't know should be missing values
+      EVS2017$v246_egp[EVS2017$v244 == "no answer" & EVS2017$v246_egp == "not applicable"] <- NA
+      EVS2017$v246_egp[EVS2017$v244 == "dont know" & EVS2017$v246_egp == "not applicable"] <- NA
+
+  # - v262_ISCED_1: not clear, probably father / mother not known
+  #   Very few cases
+      nrow(EVS2017[EVS2017$v262_ISCED_1 == "not applicable", ])
+  #   Action: recode to missing values
+      EVS2017 <- EVS2017[EVS2017$v262_ISCED_1 != "not applicable", ]
+
+  # - v263_ISCED_1: not clear, probably father / mother not known
+  #   Very few cases
+      nrow(EVS2017[EVS2017$v263_ISCED_1 == "not applicable", ])
+  #   Action: recode to missing values
+      EVS2017 <- EVS2017[EVS2017$v263_ISCED_1 != "not applicable", ]
+
 # Step 5: Missing cases --------------------------------------------------------
 
   NA_labels <- c("multiple answers Mail",
@@ -987,7 +1084,7 @@ saveRDS(var_types, "../input/var_types.rds")
                  "follow-up non response",
                  "other missing",
                  "item not included",
-                 "not applicable",
+                #  "not applicable",
                  "no answer",
                  "dont know",
                  "does not apply to me",
@@ -995,7 +1092,8 @@ saveRDS(var_types, "../input/var_types.rds")
                  "no formal education",
                  "not allowed to vote",
                  "other answer (code if volunteered only)",
-                 "don't know"
+                 "don't know",
+                 "missing" # for values coded as missing by me
   )
 
   for (j in 1:ncol(EVS2017)){
@@ -1008,16 +1106,9 @@ saveRDS(var_types, "../input/var_types.rds")
     }
   }
 
-  # Complete cases
-  sum(rowSums(is.na(EVS2017)) == 0)
-
-  EVS2017[rowSums(is.na(EVS2017)) == 0, ]
-
-# Step 6: Final checks on data -------------------------------------------------
-
-  # Drop empty categories
-  for (j in 1:ncol(EVS2017)){
-    if(is.factor(EVS2017[, j])){
+  # Drop empty categories again
+  for (j in 1:ncol(EVS2017)) {
+    if (is.factor(EVS2017[, j])) {
       EVS2017[, j] <- droplevels(EVS2017[, j])
     }
   }
@@ -1096,13 +1187,13 @@ for (j in var_ord_r1) {
 
   # Check values are the same
   same_values[j] <- all.equal(
-    as.character(EVS2017_fc[, j]),
+    as.character(EVS2017[, j]),
     as.character(EVS2017_ord[, j])
   )
 
   # Check level order is reversed
   rev_levels[j] <- all.equal(
-    rev(levels(EVS2017_fc[, j])),
+    rev(levels(EVS2017[, j])),
     levels(EVS2017_ord[, j])
   )
 }
@@ -1134,9 +1225,6 @@ for (j in var_ord_r2) {
 
 # Identify unique response types
 ord_resp_uni[ambi]
-
-# Temporary decision: just make them ordered as is
-# TODO: make a more informed decision for each
 
 # Which variables have this pattern?
 var_ord_r3 <- names(ord_resp[ord_resp %in% ord_resp_uni[ambi]])
