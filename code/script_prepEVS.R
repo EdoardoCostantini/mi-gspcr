@@ -492,6 +492,23 @@
   # Transform to a factor
   EVS2017$v52_r <- factor(EVS2017$v52_r)
 
+  # Proportion of cases in categories
+  prop.table(table(EVS2017$v52_r))
+  
+  # Collapse low-frequency categories to others
+  EVS2017$v52_r <- forcats::fct_collapse(
+    EVS2017$v52_r,
+    missing = c("dont know", "no answer"),
+    other = c(
+      "Buddhist",
+      "Free church/Non-conformist/Evangelical",
+      "Hindu",
+      "Jew",
+      "Muslim",
+      "Other"
+    )
+  )
+
   # Drop
   EVS2017 <- dropVars(EVS2017, c("v51", "v52"))
 
@@ -1002,7 +1019,8 @@ saveRDS(var_types, "../input/var_types.rds")
                  "no formal education",
                  "not allowed to vote",
                  "other answer (code if volunteered only)",
-                 "don't know"
+                 "don't know",
+                 "missing" # for values coded as missing by me
   )
 
   for (j in 1:ncol(EVS2017)){
