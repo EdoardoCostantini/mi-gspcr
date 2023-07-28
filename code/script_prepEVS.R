@@ -1087,6 +1087,8 @@ saveRDS(var_types, "../input/var_types.rds")
                  "follow-up non response",
                  "other missing",
                  "item not included",
+                 "not classifiable",
+                 "it is against democracy", # in questions v138 and similar, does not fit the rest of the answer set
                 #  "not applicable",
                  "no answer",
                  "dont know",
