@@ -2,7 +2,7 @@
 # Objective: Clean and prepare EVS data
 # Author:    Edoardo Costantini
 # Created:   2023-07-11
-# Modified:  2023-07-20
+# Modified:  2023-07-28
 # Notes: 
 
 # Environment ------------------------------------------------------------------
@@ -110,6 +110,17 @@
 
   # Drop
   EVS2017 <- dropVars(EVS2017, v_cntco)
+
+  # > Voting variables ---------------------------------------------------------
+
+  # Treat
+  barplot(table(EVS2017$v175_LR))
+
+  # v175_LR is a variable with 60% missingness
+  cumsum(round(prop.table(table(EVS2017$v175_LR)) * 100, 1))
+
+  # Drop
+  EVS2017 <- dropVars(EVS2017, "v175_LR")
 
   # > Differently coded variables to drop --------------------------------------
 
@@ -938,7 +949,7 @@ var_types <- list(
             # how often (3 k)
             171:173,
             # Left/right
-            "174_LR", "175_LR",
+            "174_LR",
             # how often in country's elections (4 k)
             176:183,
             # immigration (5 k)
@@ -1042,14 +1053,6 @@ saveRDS(var_types, "../input/var_types.rds")
       EVS2017[EVS2017$v174_LR == "not applicable", ]
   #   Action: drop them
       EVS2017 <- EVS2017[EVS2017$v174_LR != "not applicable", ]
-
-  # - v175_LR -> not applicable if v174_LR missing
-      EVS2017[EVS2017$v175_LR == "not applicable", c("v174_LR", "v175_LR")]
-  #   Action: recode to missing values
-      EVS2017$v175_LR <- forcats::fct_collapse(
-        EVS2017$v175_LR,
-        missing = "not applicable"
-      )
 
   # - v246_egp -> people with no jobs should have this not applicable
       # 10% of the data
