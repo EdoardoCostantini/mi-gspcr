@@ -2,17 +2,23 @@
 # Objective: Check how EVS variables are distributed
 # Author:    Edoardo Costantini
 # Created:   2023-07-20
-# Modified:  2023-07-20
+# Modified:  2023-07-28
 # Notes: 
 
 # Load data --------------------------------------------------------------------
 
 # Load evs data
-EVS <- readRDS("../input/ZA7500_processed.rds")
 EVS <- readRDS("../input/ZA7500_fc_processed.rds")
+EVS <- readRDS("../input/ZA7500_processed.rds")
 
 # Load variable type map
 var_types <- readRDS("../input/var_types.rds")
+
+# Define an empty method vector for imputation
+imputation_methods <- rep(NA, ncol(EVS))
+
+# Give it the variables names
+names(imputation_methods) <- colnames(EVS)
 
 # Binary data ------------------------------------------------------------------
 
@@ -32,6 +38,9 @@ for (j in var_types$bin) {
 # v18 - do you belong to Self-help group, mutual aid group (example extreme case)
 table(EVS[, "v18"])
 
+# Impute all of these with gspcr.logreg
+imputation_methods[var_types$bin] <- "gspcr.logreg"
+
 # Categorical data -------------------------------------------------------------
 
 var_types$cat
@@ -47,14 +56,8 @@ for (j in var_types$cat) {
     )
 }
 
-# mode - #TODO: should have been dropped already
-table(EVS[, "mode"])
-
-# religion - #TODO: should have been dropped already
-table(EVS[, "v52_r"])
-
-# Country born
-table(EVS[, "v228b_r"])
+# Impute all of these with gspcr.polyreg
+imputation_methods[var_types$cat] <- "gspcr.polyreg"
 
 # Ordinal data -----------------------------------------------------------------
 
@@ -74,6 +77,28 @@ for (j in var_types$ord) {
         ylab = ""
     )
 }
+
+table(EVS$v106)
+
+# Impute most of these with gspcr.pmm
+imputation_methods[var_types$ord] <- "gspcr.pmm"
+
+# Except some exceptionally normally distributed variables
+
+norm <- paste0("v", c(212:216, 218:219, 184))
+
+for (j in norm) {
+    plot(
+        density(
+            na.omit(as.numeric(EVS[, j]))
+        ),
+        main = j,
+        xlab = "",
+        ylab = ""
+    )
+}
+
+imputation_methods[norm] <- "gspcr.norm"
 
 # Continuous data --------------------------------------------------------------
 
@@ -108,9 +133,10 @@ range(v279d_r_log)
 # which was originally
 v279d_r[which(-Inf == v279d_r_log)]
 
-# It's impossible the interview took 0 minutes, maybe replace with NAs?
+# It's impossible the interview took 0 minutes, so we replace with NA
+EVS$v279d_r[which(EVS$v279d_r == 0)] <- NA
 
-# Kurtosis and skewness are much better
+# Kurtosis and skewness are much better on the log scale
 e1071::kurtosis(v279d_r_log[-which(-Inf == v279d_r_log)])
 e1071::skewness(v279d_r_log[-which(-Inf == v279d_r_log)])
 
@@ -132,7 +158,7 @@ e1071::kurtosis(v242)
 e1071::skewness(v242)
 
 # Logged version is much much better
-plot(density(v242))
+plot(density(v242_log))
 
 # Kurtosis and skewness are much better
 e1071::kurtosis(v242_log)
@@ -169,3 +195,10 @@ e1071::kurtosis(v240)
 
 # Skewness (extreme)
 e1071::skewness(v240)
+
+# Impute both with gspcr.pmm
+imputation_methods[var_types$cou] <- "gspcr.pmm"
+
+# Store imputation methods vector ----------------------------------------------
+
+saveRDS(imputation_methods, "../input/imputation_methods-mi-gspcr.rds")
