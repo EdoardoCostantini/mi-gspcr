@@ -2,7 +2,7 @@
 # Objective: Clean and prepare EVS data
 # Author:    Edoardo Costantini
 # Created:   2023-07-11
-# Modified:  2023-07-28
+# Modified:  2023-08-01
 # Notes: 
 
 # Environment ------------------------------------------------------------------
@@ -1264,7 +1264,7 @@ EVS2017_ord[, var_types$cou] <- sapply(EVS2017_ord[, var_types$cou], function(j)
 # Step 8: Reduce sample size ---------------------------------------------------
 
 # Select only obs from founding countries
-EVS2017_fc <- EVS2017 %>%
+EVS2017_fc <- EVS2017_ord %>%
   filter(country %in% c("Germany", "Italy", "France", "Belgium", "Netherlands"))
 
 # Drop levels of country not used
