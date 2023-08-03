@@ -865,14 +865,10 @@ var_types <- list(
                  c(
                    # Religious denomination
                    "52_r",
-                   # Frequency of attendance (7 k)
-                   54, 55,
                    # Consider yourself (3k)
                    56,
                    # statements close to beliefs (4 k)
                    62,
-                   # how often pray
-                   64,
                    # Might have done it (3 k)
                    98:101,
                    # Which of these most important (4 k)
@@ -896,8 +892,6 @@ var_types <- list(
                    "263_ISCED_1",
                    # Job / profession respondent
                    "246_egp", # keep
-                   # Income
-                   261,
                    # When you were 14
                    264:274,
                    # Region of interview,
@@ -922,8 +916,12 @@ var_types <- list(
             39,
             # agree disagree with statements (5 k)
             46:50,
+            # Frequency of attendance (7 k)
+            54, 55,
             # importance of god in life (10 k)
             63,
+            # how often pray
+            64,
             # succesful partnership
             65:70,
             # agree disagree (4 k)
@@ -970,6 +968,8 @@ var_types <- list(
             212:220,
             # What should a society provide?
             221:224,
+            # Income
+            261,
             # Interest in iterview
             280,
             # Size of town interview
