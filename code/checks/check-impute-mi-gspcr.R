@@ -29,8 +29,6 @@ mids_cont <- mice(
 # Check trace plots
 plot(mids_cont)
 
-# Continuous data with threshold -----------------------------------------------
-
 # Binary data ------------------------------------------------------------------
 
 # Subset a few binary and ordinal variables
