@@ -150,5 +150,18 @@ mids_mi_gspcr <- mice(
     seed = 20230801
 )
 
+# Parallel MICE ----------------------------------------------------------------
 
-# Mixed data -------------------------------------------------------------------
+imp1 <- futuremice(
+    data = EVS_numeric,
+    m = 2,
+    n.core = 2,
+    maxit = 5,
+    method = "gspcr.norm",
+    ridge = 0,
+    eps = 0, # bypasses remove.lindep()
+    parallelseed = 20230802,
+    threshold = 1L
+)
+
+plot(imp1)
