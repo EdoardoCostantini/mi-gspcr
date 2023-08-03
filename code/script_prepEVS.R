@@ -2,7 +2,7 @@
 # Objective: Clean and prepare EVS data
 # Author:    Edoardo Costantini
 # Created:   2023-07-11
-# Modified:  2023-08-01
+# Modified:  2023-08-03
 # Notes: 
 
 # Environment ------------------------------------------------------------------
@@ -1098,7 +1098,8 @@ saveRDS(var_types, "../input/var_types.rds")
                  "not allowed to vote",
                  "other answer (code if volunteered only)",
                  "don't know",
-                 "missing" # for values coded as missing by me
+                 "missing", # for values coded as missing by me
+                 "-1"
   )
 
   for (j in 1:ncol(EVS2017)){
@@ -1117,6 +1118,18 @@ saveRDS(var_types, "../input/var_types.rds")
       EVS2017[, j] <- droplevels(EVS2017[, j])
     }
   }
+
+  # There are 9 cases that have missing values on v275b_N1
+  sum(is.na(EVS2017$v275b_N1))
+
+  # That's a tiny fraction of the sample size
+  mean(is.na(EVS2017$v275b_N1))
+
+  # This variable has a lot of levels!
+  nlevels(EVS2017$v275b_N1)
+
+  # Imputing it would be very difficult, so we just drop those 9 people
+  EVS2017 <- EVS2017[!is.na(EVS2017$v275b_N1), ]
 
 # Step 7: Make sure variable types ---------------------------------------------
 
