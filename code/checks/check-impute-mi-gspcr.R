@@ -7,7 +7,11 @@
 
 # Load data --------------------------------------------------------------------
 
-EVS <- readRDS("../input/ZA7500_fc_processed.rds")
+EVS_small <- readRDS("../input/ZA7500_fc_processed.rds")
+EVS <- readRDS("../input/ZA7500_processed.rds")
+
+# Load variable types
+var_types <- readRDS("../input/var_types.rds")
 
 # Continuous data --------------------------------------------------------------
 
@@ -29,24 +33,122 @@ plot(mids_cont)
 
 # Binary data ------------------------------------------------------------------
 
-# Ordinal data -----------------------------------------------------------------
+# Subset a few binary and ordinal variables
+EVS_bin <- EVS_small[, c(var_types$bin)]
 
-# Define columns for ordinal data
-var_ord <- 3:9
+# Create a method vector
+methods <- rep("gspcr.logreg", ncol(EVS_bin))
 
 # Try impute
-mids_ord <- mice(
-    data = EVS[, var_ord],
+mids_bin <- mice(
+    data = EVS_bin,
     m = 5,
     maxit = 5,
-    method = "gspcr.polyreg"
+    ridge = 0, 
+    eps = 0, # bypasses remove.lindep()
+    threshold = 1L,
+    method = methods,
+    seed = 20230801
+)
+
+# Ordinal data -----------------------------------------------------------------
+
+# Subset a few binary and ordinal variables
+EVS_ord <- EVS_small[, c(var_types$ord)]
+
+# Create a method vector
+methods_polr <- rep("gspcr.polr", ncol(EVS_ord))
+
+# Try impute with polr
+mids_ord <- mice(
+    data = EVS_ord,
+    m = 5,
+    maxit = 5,
+    ridge = 0, 
+    eps = 0, # bypasses remove.lindep()
+    threshold = 1L,
+    method = methods_polr,
+    seed = 20230801
+)
+
+# Create a method vector
+methods_pmm <- rep("gspcr.pmm", ncol(EVS_ord))
+
+# Try impute with pmm
+mids_ord <- mice(
+    data = EVS_ord,
+    m = 5,
+    maxit = 5,
+    ridge = 0, 
+    eps = 0, # bypasses remove.lindep()
+    threshold = 1L,
+    method = methods_pmm
 )
 
 # Check traceplots
 plot(mids_ord)
 
+# Impute many chains to check the convergence
+mids_ord_chians <- futuremice(
+    parallelseed = 20230802,
+    n.core = 5,
+    data = EVS_ord,
+    m = 5,
+    maxit = 50,
+    ridge = 0,
+    eps = 0, # bypasses remove.lindep()
+    threshold = 1L,
+    method = methods_pmm,
+    thrs = "PR2",
+    fit_measure = "BIC",
+    nthrs = 10,
+    npcs_range = 1:5,
+    K = 1,
+    donors = 5L
+)
+
+# Look at traceplots
+plot(mids_ord_chians)
+
 # Categorical data -------------------------------------------------------------
 
-# Poisson data -----------------------------------------------------------------
+# Subset a few binary and ordinal variables
+EVS_cat <- EVS_small[, c(var_types$cat)]
+
+# Create a method vector
+methods_polyreg <- rep("gspcr.polyreg", ncol(EVS_cat))
+
+# Try impute with polr
+mids_cat <- mice(
+    data = EVS_cat,
+    m = 5,
+    maxit = 5,
+    ridge = 0, 
+    eps = 0, # bypasses remove.lindep()
+    threshold = 1L,
+    method = methods_polyreg,
+    seed = 20230801
+)
+
+# Could look at traceplots even for this
+plot(mids_ord)
+
+# All data ---------------------------------------------------------------------
+
+# Load imputation methods vector
+imp_meth_vec <- readRDS("../input/imputation_methods-mi-gspcr.rds")
+
+# Impute
+mids_mi_gspcr <- mice(
+    data = EVS_small,
+    m = 5,
+    maxit = 5,
+    method = imp_meth_vec,
+    ridge = 0, 
+    eps = 0, # bypasses remove.lindep()
+    threshold = 1L,
+    seed = 20230801
+)
+
 
 # Mixed data -------------------------------------------------------------------
