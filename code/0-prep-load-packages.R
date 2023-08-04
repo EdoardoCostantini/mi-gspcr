@@ -2,13 +2,12 @@
 # Objective: Package loading
 # Author:    Edoardo Costantini
 # Created:   2023-07-12
-# Modified:  2023-07-12
+# Modified:  2023-08-04
 # Notes:     Run this script to store the information on the session info 
 #            before running analysis
 
 # Load packages
 library(mice)
-packageVersion("mice")
 library(gspcr)
 library(foreign) # to import .dta data
 library(labelled) # to extract variable labels
