@@ -43,7 +43,8 @@ imputation_methods[var_types$bin] <- "gspcr.logreg"
 
 # Categorical data -------------------------------------------------------------
 
-var_types$cat
+# How many right now?
+length(var_types$cat)
 
 # Define plot space
 par(mfrow = c(3, 3))
