@@ -2,7 +2,7 @@
 # Objective: Clean and prepare EVS data
 # Author:    Edoardo Costantini
 # Created:   2023-07-11
-# Modified:  2023-08-01
+# Modified:  2023-08-04
 # Notes: 
 
 # Environment ------------------------------------------------------------------
@@ -11,11 +11,7 @@
   rm(list = ls())
 
   # Packages
-  library(foreign)  # to import .dta data
-  library(labelled) # to extract variable labels
-  library(mice)
-  library(dplyr)
-  library(forcats) # for fct_collapse() function to recode factors
+  source("./0-prep-load-packages.R")
 
   # Source
   source("./functions/dropVars.R")
