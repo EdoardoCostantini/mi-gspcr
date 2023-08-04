@@ -2,7 +2,7 @@
 # Objective: Check MI-GSPCR works all types of data
 # Author:    Edoardo Costantini
 # Created:   2023-07-20
-# Modified:  2023-08-03
+# Modified:  2023-08-04
 # Notes: 
 
 # Load data --------------------------------------------------------------------
@@ -68,6 +68,15 @@ mids_ord <- mice(
     method = methods_polr,
     seed = 20230801
 )
+
+# Ordinal data with pmm --------------------------------------------------------
+
+# Transform ordinal variables with more than 5 categories to numeric for PCA
+for (j in var_types$ord) {
+    if (nlevels(EVS_ord[, j]) >= 5) {
+        EVS_ord[, j] <- as.numeric(EVS_ord[, j])
+    }
+}
 
 # Create a method vector
 methods_pmm <- rep("gspcr.pmm", ncol(EVS_ord))
