@@ -89,7 +89,8 @@ mids_ord <- mice(
     ridge = 0, 
     eps = 0, # bypasses remove.lindep()
     threshold = 1L,
-    method = methods_pmm
+    method = methods_pmm,
+    seed = 20230802
 )
 
 # Check traceplots
