@@ -2,10 +2,13 @@
 # Objective: Impute prepared EVS data with Mi-GSPCR
 # Author:    Edoardo Costantini
 # Created:   2023-07-12
-# Modified:  2023-08-04
+# Modified:  2023-08-08
 # Notes: 
 
-# Load data --------------------------------------------------------------------
+# Prepare environment ----------------------------------------------------------
+
+# Load Packages
+source("0-prep-load-packages.R")
 
 # Load EVS data
 EVS <- readRDS("../input/ZA7500_processed.rds")
@@ -56,7 +59,7 @@ mids_mi_gspcr <- futuremice(
     parallelseed = 20230804,
     n.core = 10,
     # General mice arguments
-    data = EVS_numeric,
+    data = EVS,
     m = 10,
     maxit = 50,
     method = imp_meth_vec,
