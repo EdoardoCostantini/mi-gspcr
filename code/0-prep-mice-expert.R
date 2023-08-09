@@ -202,7 +202,21 @@ predMat[target, ,drop = FALSE]
 
 # Correlation threshold --------------------------------------------------------
 
-# Study a range of values and their effect on the decisions
+# Transform to numeric
+EVS_ord <- sapply(EVS[, var_types$ord], as.numeric)
+
+# Check correlation between target variable and the ordinal ones
+corr_mat <- cor(EVS_ord, use = "pairwise.complete.obs")
+barplot(sort(abs(corr_mat[target, ])))
+
+# How many variables larger than .1?
+sum(abs(corr_mat[target, ]) > .1)
+
+# How many variables larger than .2?
+sum(abs(corr_mat[target, ]) > .2)
+
+# Would probably keep the higher than .2
+preds_corr <- colnames(corr_mat)[abs(corr_mat[target, ]) > .2]
 
 # Influx and outflux -----------------------------------------------------------
 
