@@ -13,9 +13,6 @@ source("0-prep-load-packages.R")
 # Load evs data
 EVS <- readRDS("../input/ZA7500_fc_processed.rds")
 EVS <- readRDS("../input/ZA7500_processed.rds")
-levels(EVS$country)
-
- <- c("Austria",'Belgium', 'Denmark', 'Finland', 'France', 'Germany', 'Greece', 'Italy', 'Luxembourg', 'Netherlands', 'Norway', 'Swizerland')
 
 # Prepare Western European countries for ImmerzeelEtAl2016
 EVS <- EVS %>%
@@ -145,6 +142,63 @@ round(colMeans(is.na(EVS[, model2_amv])) * 100, 3)
 
 # Proportion of complete cases
 as.numeric(rownames(mdpatterns)[1]) / nrow(EVS) * 100
+
+# Create empty predictor matrix
+predMat <- diag(0, ncol = ncol(EVS), nrow = ncol(EVS))
+
+# Give it meaningful names
+dimnames(predMat) <- list(colnames(EVS), colnames(EVS))
+
+# Analysis model variables -----------------------------------------------------
+
+predMat[model2_amv, model2_amv] <- 1
+
+# Relation to non-response -----------------------------------------------------
+
+plots <- NULL
+
+# Define a target of imputation
+target <- model2_amv["nativ_1"]
+
+# Define potential auxiliary variables (PAs)
+PAs <- colnames(EVS)[!colnames(EVS) %in% model2_amv]
+
+# for(i in )
+for(j in PAs){
+
+    # Observed cases on j
+    pred_obs <- !is.na(EVS[, j])
+
+    # Group observed cases on j based on weather they are missing or not on target
+    R <- is.na(EVS[pred_obs, target])
+
+    # Extract predictor of interest
+    pred <- factor(EVS[pred_obs, j], labels = 1:length(unique(EVS[pred_obs, j])))
+
+    # Plot histograms
+    plots[[j]] <- histogram(
+        x = ~ pred | R,
+        xlab = j,
+        scales = list(y = list(rot = 45), x = list(rot = 45))
+    )
+}
+
+# Print all of them and analyse
+plots[1:10]
+
+# As examples, consider this variables should be left out of the prediction model
+pred_drop <- c("v232", "v267", "v268")
+plots[names(plots) %in% pred_drop]
+
+# Write down number of variables that should be used used as predictors for the imputaiton of the target
+pred_add <- c("v196", "v216", "v261")
+plots[names(plots) %in% pred_add]
+
+# Update prediction matrix
+predMat[target, pred_add] <- 1
+
+# Check out currrent target prediction
+predMat[target, ,drop = FALSE]
 
 # Correlation threshold --------------------------------------------------------
 
