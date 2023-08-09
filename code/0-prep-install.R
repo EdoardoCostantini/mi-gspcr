@@ -9,14 +9,14 @@
 
 # Install gspcr
 install.packages(
-    "../input/gspcr_0.9.1.tar.gz",
+    "../input/gspcr_0.9.2.8.tar.gz",
     repos = NULL,
     type = "source"
 )
 
 # Install experimental mice
 install.packages(
-    "../input/mice_3.16.0.0001.tar.gz",
+    "../input/mice_3.16.0.00061.tar.gz",
     repos = NULL,
     type = "source"
 )
