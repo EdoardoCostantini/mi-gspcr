@@ -2,7 +2,7 @@
 # Objective: Impute prepared EVS data with Mi-GSPCR
 # Author:    Edoardo Costantini
 # Created:   2023-07-12
-# Modified:  2023-08-08
+# Modified:  2023-08-09
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -50,6 +50,27 @@ R_session <- utils::sessionInfo()
 saveRDS(R_session, paste0("../input/", date_time, "-R-session.rds"))
 
 # Imputation -------------------------------------------------------------------
+
+# Sequential MICE ----------------------------------------------------------------
+
+# Parellel MICE run
+mids_mi_gspcr <- mice(
+    # General mice arguments
+    data = EVS,
+    m = 10,
+    maxit = 50,
+    method = imp_meth_vec,
+    ridge = 0,
+    eps = 0, # bypasses remove.lindep()
+    threshold = 1L,
+    seed = 20230804,
+    # GSPCR specific arguments
+    thrs = "PR2",
+    fit_measure = "BIC",
+    nthrs = 10,
+    npcs_range = 1:5,
+    K = 1
+)
 
 # Parallel MICE ----------------------------------------------------------------
 
