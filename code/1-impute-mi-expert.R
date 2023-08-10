@@ -2,7 +2,7 @@
 # Objective: Impute prepared EVS data with MI-Expert imputaiton
 # Author:    Edoardo Costantini
 # Created:   2023-08-08
-# Modified:  2023-08-08
+# Modified:  2023-08-10
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -18,7 +18,7 @@ EVS <- readRDS("../input/ZA7500_fc_processed.rds") # smaller version
 var_types <- readRDS("../input/var_types.rds")
 
 # Load imputation methods vector
-imp_meth_vec <- readRDS("../input/imputation_methods-mi-expert.rds")
+meth <- readRDS("../input/mi-model-forms.rds")
 
 # Ad-hoc data prep -------------------------------------------------------------
 
@@ -62,7 +62,7 @@ mids_mi_expert <- futuremice(
     data = EVS,
     m = 10,
     maxit = 50,
-    method = imp_meth_vec
+    method = meth
 )
 
 # Save mids object
