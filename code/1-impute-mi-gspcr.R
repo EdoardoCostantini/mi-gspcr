@@ -2,7 +2,7 @@
 # Objective: Impute prepared EVS data with Mi-GSPCR
 # Author:    Edoardo Costantini
 # Created:   2023-07-12
-# Modified:  2023-08-09
+# Modified:  2023-08-10
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -18,7 +18,10 @@ EVS <- readRDS("../input/ZA7500_fc_processed.rds") # smaller version
 var_types <- readRDS("../input/var_types.rds")
 
 # Load imputation methods vector
-imp_meth_vec <- readRDS("../input/imputation_methods-mi-gspcr.rds")
+meths <- readRDS("../input/mi-model-forms.rds")
+
+# Attach GSPCR tag for mi-gscpr imputation
+meths <- paste0("gspcr.", meths)
 
 # Ad-hoc data prep -------------------------------------------------------------
 
@@ -32,7 +35,6 @@ for(j in var_types$ord){
 # Replace v279d_r variable with its log
 plot(density(na.omit(EVS$v279d_r)))
 EVS$v279d_r[!is.na(EVS$v279d_r)] <- log(EVS$v279d_r[!is.na(EVS$v279d_r)])
-EVS$v279d_r <- EVS$v279d_r
 
 # Replace v242 variable with its log
 plot(density(na.omit(EVS$v242)))
@@ -59,7 +61,7 @@ mids_mi_gspcr <- mice(
     data = EVS,
     m = 10,
     maxit = 50,
-    method = imp_meth_vec,
+    method = meths,
     ridge = 0,
     eps = 0, # bypasses remove.lindep()
     threshold = 1L,
@@ -82,8 +84,8 @@ mids_mi_gspcr <- futuremice(
     # General mice arguments
     data = EVS,
     m = 10,
-    maxit = 50,
-    method = imp_meth_vec,
+    maxit = 20,
+    method = meths,
     ridge = 0,
     eps = 0, # bypasses remove.lindep()
     threshold = 1L,
