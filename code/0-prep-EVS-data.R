@@ -2,7 +2,7 @@
 # Objective: Clean and prepare EVS data
 # Author:    Edoardo Costantini
 # Created:   2023-07-11
-# Modified:  2023-08-04
+# Modified:  2023-08-11
 # Notes:
 
 # Environment ------------------------------------------------------------------
@@ -841,6 +841,12 @@ EVS2017 <- EVS2017 %>%
         list = v279d_r == "item not included",
         values = NA
     ))
+
+# Check range of interview time
+table(EVS2017$v279d_r)
+
+# It's impossible the interview took 0 minutes, so we replace with NA
+EVS2017$v279d_r[which(EVS2017$v279d_r == 0)] <- NA
 
 # > interest in interview ----------------------------------------------------
 
