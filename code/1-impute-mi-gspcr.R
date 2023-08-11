@@ -2,7 +2,7 @@
 # Objective: Impute prepared EVS data with Mi-GSPCR
 # Author:    Edoardo Costantini
 # Created:   2023-07-12
-# Modified:  2023-08-10
+# Modified:  2023-08-11
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -11,8 +11,8 @@
 source("0-prep-load-packages.R")
 
 # Load EVS data
-EVS <- readRDS("../input/ZA7500_processed.rds")
 EVS <- readRDS("../input/ZA7500_fc_processed.rds") # smaller version
+EVS <- readRDS("../input/ZA7500_processed.rds")
 
 # Load variable types
 var_types <- readRDS("../input/var_types.rds")
@@ -59,8 +59,8 @@ saveRDS(R_session, paste0("../input/", date_time, "-R-session.rds"))
 mids_mi_gspcr <- mice(
     # General mice arguments
     data = EVS,
-    m = 10,
-    maxit = 50,
+    m = 1,
+    maxit = 30,
     method = meths,
     ridge = 0,
     eps = 0, # bypasses remove.lindep()
@@ -84,7 +84,7 @@ mids_mi_gspcr <- futuremice(
     # General mice arguments
     data = EVS,
     m = 10,
-    maxit = 20,
+    maxit = 30,
     method = meths,
     ridge = 0,
     eps = 0, # bypasses remove.lindep()
