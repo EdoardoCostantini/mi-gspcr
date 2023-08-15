@@ -2,7 +2,7 @@
 # Objective: Impute prepared EVS data with Mi-GSPCR
 # Author:    Edoardo Costantini
 # Created:   2023-07-12
-# Modified:  2023-08-11
+# Modified:  2023-08-15
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -13,6 +13,25 @@ source("0-prep-load-packages.R")
 # Load EVS data
 EVS <- readRDS("../input/ZA7500_fc_processed.rds") # smaller version
 EVS <- readRDS("../input/ZA7500_processed.rds")
+
+# Prepare Western European countries for ImmerzeelEtAl2016
+EVS <- EVS %>%
+    filter(
+        country %in% c(
+            "Austria",
+            "Belgium",
+            "Denmark",
+            "Finland",
+            "France",
+            "Germany",
+            "Greece",
+            "Italy",
+            "Luxembourg",
+            "Netherlands",
+            "Norway",
+            "Swizerland"
+        )
+    )
 
 # Load variable types
 var_types <- readRDS("../input/var_types.rds")
