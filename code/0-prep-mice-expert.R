@@ -24,6 +24,9 @@ EVS$country <- droplevels(EVS$country)
 # Load variable type map
 var_types <- readRDS("../input/var_types.rds")
 
+# Toy dataset
+# EVS <- EVS[, c("v1", "v2", "v9", "v10", "v54", "v55", "v279d_r", "v242", "country")]
+
 # Analysis model selection -----------------------------------------------------
 
 # Model 1: Euthanasia ----------------------------------------------------------
@@ -153,70 +156,154 @@ dimnames(predMat) <- list(colnames(EVS), colnames(EVS))
 
 predMat[model2_amv, model2_amv] <- 1
 
+# Relationship types -----------------------------------------------------------
+
+# Craete variable pairs
+var_paris <- expand.grid(names(var_types), names(var_types))
+var_paris <- var_paris[!duplicated(t(apply(var_paris, 1, sort))), ]
+
+# Assign relationship
+data.frame(
+    var_paris,
+    asso = c(
+        "cramer",
+        "cramer",
+        "cramer",
+        "pearson",
+        "pearson",
+        "cramer",
+        "cramer",
+        "?",
+        "?",
+        "cramer",
+        "cramer",
+        "peaarson",
+        "peaarson",
+        "peaarson",
+        "peaarson"
+    )
+)
+
 # Relation to non-response -----------------------------------------------------
 
-plots <- NULL
+# Create a matrix of response vectors
+R <- is.na(EVS)
 
-# Define a target of imputation
-target <- model2_amv["nativ_1"]
+# Make them factors
+R <- as.data.frame(lapply(as.data.frame(R), factor))
 
-# Define potential auxiliary variables (PAs)
-PAs <- colnames(EVS)[!colnames(EVS) %in% model2_amv]
+# Define matrix to store relation to non-resp
+mat_relno <- diag(0, ncol = ncol(EVS), nrow = ncol(EVS))
+colnames(mat_relno) <- colnames(EVS)
+rownames(mat_relno) <- colnames(EVS)
 
-# for(i in )
-for(j in PAs){
+# Apply logistic regression Pseudo R2
+for (j in 1:ncol(EVS)) {
+    print(j)
 
-    # Observed cases on j
-    pred_obs <- !is.na(EVS[, j])
-
-    # Group observed cases on j based on weather they are missing or not on target
-    R <- is.na(EVS[pred_obs, target])
-
-    # Extract predictor of interest
-    pred <- factor(EVS[pred_obs, j], labels = 1:length(unique(EVS[pred_obs, j])))
-
-    # Plot histograms
-    plots[[j]] <- histogram(
-        x = ~ pred | R,
-        xlab = j,
-        scales = list(y = list(rot = 45), x = list(rot = 45))
-    )
+    # Check there is missing value
+    if (nlevels(R[, j]) == 2){
+        # Compute the PR2 for all simple models
+        ascores <- cp_thrs_PR2(
+            dv = R[, j],
+            ivs = EVS[, -j],
+            fam = "binomial"
+        )
+    } else {
+        ascores <- rep(0, ncol(EVS)-1)
+        names(ascores) <- names(EVS[, -j])
+    }
+    
+    # Put in matrix
+    mat_relno[j, names(ascores)] <- ascores^2
+    mat_relno[names(ascores), j] <- ascores^2
 }
 
-# Print all of them and analyse
-plots[1:10]
-
-# As examples, consider this variables should be left out of the prediction model
-pred_drop <- c("v232", "v267", "v268")
-plots[names(plots) %in% pred_drop]
-
-# Write down number of variables that should be used used as predictors for the imputaiton of the target
-pred_add <- c("v196", "v216", "v261")
-plots[names(plots) %in% pred_add]
-
-# Update prediction matrix
-predMat[target, pred_add] <- 1
-
-# Check out currrent target prediction
-predMat[target, ,drop = FALSE]
+# Quick peak
+round(mat_relno, 2)
 
 # Correlation threshold --------------------------------------------------------
 
-# Transform to numeric
-EVS_ord <- sapply(EVS[, var_types$ord], as.numeric)
+# Define a storing object
+mat_asso <- diag(0, ncol = ncol(EVS), nrow = ncol(EVS))
+colnames(mat_asso) <- colnames(EVS)
+rownames(mat_asso) <- colnames(EVS)
 
-# Check correlation between target variable and the ordinal ones
-corr_mat <- cor(EVS_ord, use = "pairwise.complete.obs")
-barplot(sort(abs(corr_mat[target, ])))
+for (j in 1:ncol(EVS)) {
+    print(j)
+    # Var type
+    vtype <- class(EVS[, j])
+    ncat <- length(unique(EVS[, j]))
 
-# How many variables larger than .1?
-sum(abs(corr_mat[target, ]) > .1)
+    # Define the family
+    if ("ordered" %in% vtype) {
+        fam <- "cumulative"
+    } else {
+        if ("numeric" %in% vtype) {
+            if (is.integer(EVS[, j])) {
+                fam <- "poisson"
+            } else {
+                fam <- "gaussian"
+            }
+        }
+        if ("factor" %in% vtype) {
+            if (ncat == 2) {
+                fam <- "binomial"
+            } else {
+                fam <- "baseline"
+            }
+        }
+    }
 
-# How many variables larger than .2?
-sum(abs(corr_mat[target, ]) > .2)
+    # Compute the PR2 for all simple models
+    ascores <- cp_thrs_PR2(
+        dv = EVS[, j],
+        ivs = EVS[, -j],
+        fam = fam
+    )
 
-# Would probably keep the higher than .2
-preds_corr <- colnames(corr_mat)[abs(corr_mat[target, ]) > .2]
+    # Put in matrix
+    mat_asso[j, names(ascores)] <- ascores^2
+    mat_asso[names(ascores), j] <- ascores^2
+}
+
+# Quick look
+round(mat_asso, 2)
+
+# Save them for future use
+saveRDS(
+    list(
+        mat_asso = mat_asso,
+        mat_relno = mat_relno
+    ),
+    file = "../input/mi-model-expert-inputs.rds"
+)
+
+# Read the saved file
+mats <- readRDS("../input/mi-model-expert-inputs.rds")
+
+# Combine the two sources of info
+maxc <- pmax(mats$mat_asso, mats$mat_relno)
+
+# Keep the values higher than .1
+predMat[maxc > .1] <- 1
+
+# And you can compare with the results quickpred
+quickpred(EVS)
+
+# Usabable cases ---------------------------------------------------------------
+
+# Define a target percentage of usable cases (puc)
+minpuc <- .5
+
+# Compute all md paris
+p <- md.pairs(EVS)
+
+# Compute percentage of usable cases
+puc <- p$mr / (p$mr + p$mm)
+
+# exclude predictors with a percentage usable cases below minpuc
+predMat[puc < minpuc] <- 0
 
 # Influx and outflux -----------------------------------------------------------
 
