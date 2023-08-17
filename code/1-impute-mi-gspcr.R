@@ -2,7 +2,7 @@
 # Objective: Impute prepared EVS data with Mi-GSPCR
 # Author:    Edoardo Costantini
 # Created:   2023-07-12
-# Modified:  2023-08-16
+# Modified:  2023-08-17
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -79,7 +79,7 @@ mids_mi_gspcr <- mice(
     # General mice arguments
     data = EVS,
     m = 5,
-    maxit = 10,
+    maxit = 20,
     method = meths,
     ridge = 0,
     eps = 0, # bypasses remove.lindep()
@@ -88,7 +88,7 @@ mids_mi_gspcr <- mice(
     # GSPCR specific arguments
     thrs = "PR2",
     fit_measure = "BIC",
-    nthrs = 5,
+    nthrs = 10,
     npcs_range = 1:5,
     K = 1
 )
@@ -102,10 +102,10 @@ mids_mi_gspcr_cont <- mice.mids(mids_mi_gspcr, maxit = 30)
 mids_mi_gspcr <- futuremice(
     # Parallel specific arguments
     parallelseed = 20230804,
-    n.core = 10,
+    n.core = 5,
     # General mice arguments
     data = EVS,
-    m = 10,
+    m = 5,
     maxit = 20,
     method = meths,
     ridge = 0,
