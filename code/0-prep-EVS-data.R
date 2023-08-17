@@ -91,7 +91,7 @@ v_admin <- c(
     "c_abrv",
     # "mode", # keep
     "fmissings",
-    # "v281a", # keep
+    "v281a",
     "v281a_r",
     "v282"
 )
@@ -196,7 +196,7 @@ v_codes <- c(
 
     # Region of interview
     "v275b_N2",
-    # "v275b_N1", # keep
+    "v275b_N1",
     "v275c_N2",
     "v275c_N1",
 
@@ -211,7 +211,7 @@ v_codes <- c(
     # "v251b_r", # keep
 
     # Language
-    # "v281a", # keep
+    "v281a",
     "v281a_r"
 )
 
@@ -858,14 +858,6 @@ EVS2017 <- EVS2017 %>%
         values = NA
     ))
 
-# > language of interview ----------------------------------------------------
-
-# Check overlap between country of interview and language of inteview
-table(lan = EVS2017$v281a, EVS2017$v275b_N1)
-
-# Drop langauge as it is too similar to other country variables in the data
-EVS2017 <- dropVars(EVS2017, "v281a")
-
 # Step 4: Variable types -------------------------------------------------------
 
 var_types <- list(
@@ -938,9 +930,7 @@ var_types <- list(
                 # Income
                 261,
                 # When you were 14
-                264:274,
-                # Region of interview,
-                "275b_N1"
+                264:274
             )
         )
     ),
