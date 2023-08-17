@@ -2,21 +2,21 @@
 # Objective: Install packages in the required version
 # Author:    Edoardo Costantini
 # Created:   2023-07-12
-# Modified:  2023-07-12
+# Modified:  2023-08-11
 # Notes: 
 
 # Install local version of packages --------------------------------------------
 
 # Install gspcr
 install.packages(
-    "../input/gspcr_0.9.2.8.tar.gz",
+    "../input/gspcr_0.9.2.9.tar.gz",
     repos = NULL,
     type = "source"
 )
 
 # Install experimental mice
 install.packages(
-    "../input/mice_3.16.0.00061.tar.gz",
+    "../input/mice_3.16.0.00071.tar.gz",
     repos = NULL,
     type = "source"
 )
