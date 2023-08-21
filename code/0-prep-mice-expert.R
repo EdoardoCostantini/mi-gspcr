@@ -27,6 +27,22 @@ var_types <- readRDS("../input/var_types.rds")
 # Toy dataset
 # EVS <- EVS[, c("v1", "v2", "v9", "v10", "v54", "v55", "v279d_r", "v242", "country")]
 
+# Ad-hoc data prep -------------------------------------------------------------
+
+# Transform ordinal variables with more than 5 categories to numeric for PCA
+for (j in var_types$ord) {
+    if (nlevels(EVS[, j]) >= 5) {
+        EVS[, j] <- as.numeric(EVS[, j])
+    }
+}
+
+# Replace v279d_r variable with its log
+EVS$v279d_r[!is.na(EVS$v279d_r)] <- log(EVS$v279d_r[!is.na(EVS$v279d_r)])
+EVS$v279d_r <- EVS$v279d_r
+
+# Replace v242 variable with its log
+EVS$v242[!is.na(EVS$v242)] <- log(EVS$v242[!is.na(EVS$v242)])
+
 # Analysis model selection -----------------------------------------------------
 
 # Model 1: Euthanasia ----------------------------------------------------------
@@ -152,6 +168,17 @@ predMat <- diag(0, ncol = ncol(EVS), nrow = ncol(EVS))
 # Give it meaningful names
 dimnames(predMat) <- list(colnames(EVS), colnames(EVS))
 
+# Usabable cases ---------------------------------------------------------------
+
+# Define a target percentage of usable cases (puc)
+minpuc <- .5
+
+# Compute all md paris
+p <- md.pairs(EVS)
+
+# Compute percentage of usable cases
+puc <- p$mr / p$mr + p$mm
+
 # Analysis model variables -----------------------------------------------------
 
 predMat[model2_amv, model2_amv] <- 1
@@ -201,12 +228,15 @@ rownames(mat_relno) <- colnames(EVS)
 for (j in 1:ncol(EVS)) {
     print(j)
 
+    # Define variables for which enough cases are available
+    active_set <- names(which(puc[j, -j] >= minpuc))
+
     # Check there is missing value
     if (nlevels(R[, j]) == 2){
         # Compute the PR2 for all simple models
         ascores <- cp_thrs_PR2(
             dv = R[, j],
-            ivs = EVS[, -j],
+            ivs = EVS[, active_set],
             fam = "binomial"
         )
     } else {
@@ -231,9 +261,17 @@ rownames(mat_asso) <- colnames(EVS)
 
 for (j in 1:ncol(EVS)) {
     print(j)
+
+    # Define variables for which enough cases are available
+    active_set <- names(which(puc[j, -j] >= minpuc))
+
+    # Define variables for this loop
+    dv <- EVS[, j]
+    ivs <- EVS[, active_set]
+
     # Var type
     vtype <- class(EVS[, j])
-    ncat <- length(unique(EVS[, j]))
+    ncat <- length(unique(na.omit(EVS[, j])))
 
     # Define the family
     if ("ordered" %in% vtype) {
@@ -255,16 +293,90 @@ for (j in 1:ncol(EVS)) {
         }
     }
 
-    # Compute the PR2 for all simple models
-    ascores <- cp_thrs_PR2(
-        dv = EVS[, j],
-        ivs = EVS[, -j],
-        fam = fam
-    )
+    # Train the null model and the p simple models
+    if (fam == "gaussian" | fam == "binomial" | fam == "poisson") {
+        r2 <- sapply(1:ncol(ivs), function(k) {
+            # Define complete cases
+            ry <- !is.na(dv) & !is.na(ivs[, k])
+
+            # Fit null model
+            glm0 <- stats::glm(dv[ry] ~ 1, family = fam)
+
+            # Fit simple models
+            glm1 <- stats::glm(dv[ry] ~ ivs[ry, k], family = fam)
+
+            # Compute the PR2
+            cp_gR2(
+                ll_n = logLik(glm0),
+                ll_f = logLik(glm1),
+                n = sum(ry)
+            )
+        })
+    }
+    if (fam == "baseline") {
+        r2 <- sapply(1:ncol(ivs), function(k) {
+            # Define complete cases
+            ry <- !is.na(dv) & !is.na(ivs[, k])
+
+            # Fit null model
+            glm0 <- nnet::multinom(
+                formula = dv[ry] ~ 1,
+                trace = FALSE
+            )
+
+            # Fit simple models
+            glm1 <- tryCatch(
+                expr = {
+                    nnet::multinom(
+                        formula = dv[ry] ~ ivs[ry, k],
+                        trace = FALSE
+                    )
+                },
+                error = function(e) {
+                    glm0
+                }
+            )
+
+            # Compute the PR2
+            cp_gR2(
+                ll_n = logLik(glm0),
+                ll_f = logLik(glm1),
+                n = sum(ry)
+            )
+        })
+    }
+    if (fam == "cumulative") {
+        r2 <- sapply(1:ncol(ivs), function(k) {
+            # Define complete cases
+            ry <- !is.na(dv) & !is.na(ivs[, k])
+
+            # Fit null model
+            glm0 <- MASS::polr(
+                formula = dv[ry] ~ 1,
+                method = "logistic"
+            )
+
+            # Fit simple models
+            glm1 <- MASS::polr(
+                        formula = dv[ry] ~ ivs[ry, k],
+                        method = "logistic"
+                    )
+
+            # Compute the PR2
+            cp_gR2(
+                ll_n = logLik(glm0),
+                ll_f = logLik(glm1),
+                n = sum(ry)
+            )
+        })
+    }
+
+    # Give meaningful names
+    names(r2) <- names(ivs)
 
     # Put in matrix
-    mat_asso[j, names(ascores)] <- ascores^2
-    mat_asso[names(ascores), j] <- ascores^2
+    mat_asso[j, names(r2)] <- r2
+    mat_asso[names(r2), j] <- r2
 }
 
 # Quick look
@@ -289,21 +401,45 @@ maxc <- pmax(mats$mat_asso, mats$mat_relno)
 predMat[maxc > .1] <- 1
 
 # And you can compare with the results quickpred
-quickpred(EVS)
+predMat_qp <- quickpred(EVS)
 
-# Usabable cases ---------------------------------------------------------------
+# Monitor differences between quickpred and our approach
+cbind(
+    rowSums(predMat),
+    rowSums(predMat_qp)
+)
 
-# Define a target percentage of usable cases (puc)
-minpuc <- .5
+# Fix extreme: reduce high numbers ---------------------------------------------
 
-# Compute all md paris
-p <- md.pairs(EVS)
+round(mats$mat_asso[j, names(r2)], 3)
+round(sqrt(r2), 3)
 
-# Compute percentage of usable cases
-puc <- p$mr / (p$mr + p$mm)
+barplot(sort(sqrt(r2)))
 
-# exclude predictors with a percentage usable cases below minpuc
-predMat[puc < minpuc] <- 0
+# Fix extreme: reduce low numbers ----------------------------------------------
+
+# There were a few variables that did not have any predictors meeting requirements
+no_predictors <- rownames(predMat)[rowSums(predMat) == 0]
+
+# Look at the distribution of the values
+barplot(sort(mats$mat_asso[no_predictors[1], ]))
+
+# What is the correlation version of this plot?
+nvar <- ncol(EVS)
+predictorMatrix <- matrix(0, nrow = nvar, ncol = nvar, dimnames = list(names(EVS), names(EVS)))
+x <- data.matrix(EVS)
+EVS$country
+head(data.matrix(EVS)[, 1:5])
+dim(EVS)
+r <- !is.na(x)
+v <- abs(cor(x, use = "pairwise.complete.obs", method = "pearson"))
+idx <- which(colnames(v) == no_predictors[1])
+barplot(tail(sort(v[idx, -idx]), 10))
+barplot(tail(sort(sqrt(r2)), 10))
+dim(v)
+barplot(sort(v[idx, -idx]))
+barplot(sort(sqrt(r2)))
+length(r2)
 
 # Influx and outflux -----------------------------------------------------------
 
