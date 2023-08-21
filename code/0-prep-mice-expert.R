@@ -162,12 +162,6 @@ round(colMeans(is.na(EVS[, model2_amv])) * 100, 3)
 # Proportion of complete cases
 as.numeric(rownames(mdpatterns)[1]) / nrow(EVS) * 100
 
-# Create empty predictor matrix
-predMat <- diag(0, ncol = ncol(EVS), nrow = ncol(EVS))
-
-# Give it meaningful names
-dimnames(predMat) <- list(colnames(EVS), colnames(EVS))
-
 # Usabable cases ---------------------------------------------------------------
 
 # Define a target percentage of usable cases (puc)
@@ -178,10 +172,6 @@ p <- md.pairs(EVS)
 
 # Compute percentage of usable cases
 puc <- p$mr / p$mr + p$mm
-
-# Analysis model variables -----------------------------------------------------
-
-predMat[model2_amv, model2_amv] <- 1
 
 # Relationship types -----------------------------------------------------------
 
@@ -429,8 +419,8 @@ mats <- readRDS("../input/mi-model-expert-inputs.rds")
 # Combine the two sources of info
 maxc <- pmax(mats$mat_asso, mats$mat_relno)
 
-# Keep the values higher than .1
-pred_best25 <- apply(maxc[, 1:4], 2, function(j) names(tail(sort(j), 25)))
+# Get best 25 predictors
+pred_best25 <- apply(maxc, 2, function(j) names(tail(sort(j), 25)))
 
 # Update predmat
 for(j in 1:ncol(pred_best25)){
@@ -445,21 +435,6 @@ cbind(
     rowSums(predMat),
     rowSums(predMat_qp)
 )
-
-# Fix extreme: reduce high numbers ---------------------------------------------
-
-round(mats$mat_asso[j, names(r2)], 3)
-round(sqrt(r2), 3)
-
-barplot(sort(sqrt(r2)))
-
-# Fix extreme: reduce low numbers ----------------------------------------------
-
-# There were a few variables that did not have any predictors meeting requirements
-no_predictors <- rownames(predMat)[rowSums(predMat) == 0]
-
-# Look at the distribution of the values
-barplot(sort(mats$mat_asso[no_predictors[1], ]))
 
 # What is the correlation version of this plot?
 nvar <- ncol(EVS)
@@ -478,6 +453,23 @@ barplot(sort(v[idx, -idx]))
 barplot(sort(sqrt(r2)))
 length(r2)
 
-# Influx and outflux -----------------------------------------------------------
+# Predictor matrix -------------------------------------------------------------
+
+# Create empty predictor matrix
+predMat <- diag(0, ncol = ncol(EVS), nrow = ncol(EVS))
+
+# Give it meaningful names
+dimnames(predMat) <- list(colnames(EVS), colnames(EVS))
+
+# Use best 25 predictors
+for (j in 1:ncol(pred_best25)) {
+    predMat[colnames(pred_best25)[j], pred_best25[, j]] <- 1
+}
+
+# Analysis model variables
+predMat[model2_amv, model2_amv] <- 1
+
+# Add country to every model for multilevel safety
+predMat[, "country"] <- 1
 
 # Other items from checklist ---------------------------------------------------
