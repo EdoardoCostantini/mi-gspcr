@@ -473,3 +473,10 @@ predMat[model2_amv, model2_amv] <- 1
 predMat[, "country"] <- 1
 
 # Other items from checklist ---------------------------------------------------
+
+# Store predictor matrix -------------------------------------------------------
+
+saveRDS(
+    predMat,
+    file = "../input/mi-model-expert-predMat.rds"
+)
