@@ -2,7 +2,7 @@
 # Objective: Study data to make decisions on how to impute the data
 # Author:    Edoardo Costantini
 # Created:   2023-08-08
-# Modified:  2023-08-08
+# Modified:  2023-08-21
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -224,9 +224,18 @@ mat_relno <- diag(0, ncol = ncol(EVS), nrow = ncol(EVS))
 colnames(mat_relno) <- colnames(EVS)
 rownames(mat_relno) <- colnames(EVS)
 
+# Start progress bar
+pb <- txtProgressBar(
+    min = 1,
+    max = ncol(EVS),
+    initial = 1,
+    style = 3
+)
+
 # Apply logistic regression Pseudo R2
 for (j in 1:ncol(EVS)) {
-    print(j)
+    # Update progress bar
+    setTxtProgressBar(pb, j)
 
     # Define variables for which enough cases are available
     active_set <- names(which(puc[j, -j] >= minpuc))
@@ -249,6 +258,9 @@ for (j in 1:ncol(EVS)) {
     mat_relno[names(ascores), j] <- ascores^2
 }
 
+# Close progress bar
+close(pb)
+
 # Quick peak
 round(mat_relno, 2)
 
@@ -259,8 +271,18 @@ mat_asso <- diag(0, ncol = ncol(EVS), nrow = ncol(EVS))
 colnames(mat_asso) <- colnames(EVS)
 rownames(mat_asso) <- colnames(EVS)
 
+# Start progress bar
+pb <- txtProgressBar(
+    min = 1,
+    max = ncol(EVS),
+    initial = 1,
+    style = 3
+)
+
+# Loop over data columns
 for (j in 1:ncol(EVS)) {
-    print(j)
+    # Update progress bar
+    setTxtProgressBar(pb, j)
 
     # Define variables for which enough cases are available
     active_set <- names(which(puc[j, -j] >= minpuc))
@@ -378,6 +400,9 @@ for (j in 1:ncol(EVS)) {
     mat_asso[j, names(r2)] <- r2
     mat_asso[names(r2), j] <- r2
 }
+
+# Close progress bar
+close(pb)
 
 # Quick look
 round(mat_asso, 2)
