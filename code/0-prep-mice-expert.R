@@ -284,6 +284,11 @@ for (j in 1:ncol(EVS)) {
     # Update progress bar
     setTxtProgressBar(pb, j)
 
+    # Skip if no missing values
+    if (!any(is.na(EVS[, j]))) {
+        next
+    }
+
     # Define variables for which enough cases are available
     active_set <- names(which(puc[j, -j] >= minpuc))
 
