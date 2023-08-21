@@ -421,6 +421,8 @@ saveRDS(
     file = "../input/mi-model-expert-inputs.rds"
 )
 
+# Get the best 25 --------------------------------------------------------------
+
 # Read the saved file
 mats <- readRDS("../input/mi-model-expert-inputs.rds")
 
@@ -428,7 +430,12 @@ mats <- readRDS("../input/mi-model-expert-inputs.rds")
 maxc <- pmax(mats$mat_asso, mats$mat_relno)
 
 # Keep the values higher than .1
-predMat[maxc > .1] <- 1
+pred_best25 <- apply(maxc[, 1:4], 2, function(j) names(tail(sort(j), 25)))
+
+# Update predmat
+for(j in 1:ncol(pred_best25)){
+    predMat[colnames(pred_best25)[j], pred_best25[, j]] <- 1
+}
 
 # And you can compare with the results quickpred
 predMat_qp <- quickpred(EVS)
