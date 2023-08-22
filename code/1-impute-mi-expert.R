@@ -2,7 +2,7 @@
 # Objective: Impute prepared EVS data with MI-Expert imputaiton
 # Author:    Edoardo Costantini
 # Created:   2023-08-08
-# Modified:  2023-08-10
+# Modified:  2023-08-22
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -19,6 +19,9 @@ var_types <- readRDS("../input/var_types.rds")
 
 # Load imputation methods vector
 meth <- readRDS("../input/mi-model-forms.rds")
+
+# Load imputation methods vector
+predMat <- readRDS("../input/mi-model-expert-predMat.rds")
 
 # Ad-hoc data prep -------------------------------------------------------------
 
@@ -51,17 +54,29 @@ saveRDS(R_session, paste0("../input/", date_time, "-R-session.rds"))
 
 # Imputation -------------------------------------------------------------------
 
+# Sequential MICE --------------------------------------------------------------
+mids_mi_expert <- mice(
+    data = EVS,
+    m = 1,
+    maxit = 5,
+    method = meth,
+    seed = 20230822
+)
+
+# Continue an interrupted sequential mice
+mids_mi_expert_cont <- mice.mids(mids_mi_expert, maxit = 30)
+
 # Parallel MICE ----------------------------------------------------------------
 
 # Parellel MICE run
 mids_mi_expert <- futuremice(
     # Parallel specific arguments
-    parallelseed = 20230804,
-    n.core = 10,
+    parallelseed = 20230822,
+    n.core = 5,
     # General mice arguments
     data = EVS,
-    m = 10,
-    maxit = 50,
+    m = 5,
+    maxit = 5,
     method = meth
 )
 

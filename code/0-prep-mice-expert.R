@@ -427,36 +427,37 @@ corMat <- abs(
 idx <- 10; colnames(EVS)[idx]
 
 # Bar plot all R2 values for response vector
-barplot(sort(sqrt(mat_relno[idx, -idx])))
+barplot(sort(sqrt(mats$mat_relno[idx, -idx])))
 
 # Bar plot all R2 values
-barplot(sort(sqrt(mat_asso[idx, -idx])))
+barplot(sort(sqrt(mats$mat_asso[idx, -idx])))
 
 # Bar plot correlations
-barplot(sort(v[idx, -idx]))
+barplot(sort(corMat[idx, -idx]))
 
 # Compare best predictors
 data.frame(
-    R2 = names(tail(sort(sqrt(mat_asso[idx, -idx])), 10)),
+    R2 = names(tail(sort(sqrt(mats$mat_asso[idx, -idx])), 10)),
     cor = names(tail(sort(v[idx, -idx]), 10))
 )
 
-# Get the best 25 --------------------------------------------------------------
+# Get the best -----------------------------------------------------------------
 
 # Combine the two sources of info
 maxc <- pmax(mats$mat_asso, mats$mat_relno)
 
-# Get best 25 predictors
-pred_best25 <- apply(maxc, 2, function(j) names(tail(sort(j), 25)))
+# Study the predictors
+par(mfrow = c(2, 2))
+lapply(1:ncol(maxc), function(j) {
+    barplot(
+        tail(sort(sqrt(maxc[j, -j])), 30),
+        main = colnames(maxc)[j],
+        las = 2
+    )
+})
 
-# And you can compare with the results quickpred
-predMat_qp <- quickpred(EVS)
-
-# Monitor differences between quickpred and our approach
-cbind(
-    rowSums(predMat),
-    rowSums(predMat_qp)
-)
+# Get best tot predictors
+pred_best <- apply(maxc, 2, function(j) names(tail(sort(j), 15)))
 
 # Predictor matrix -------------------------------------------------------------
 
@@ -466,9 +467,9 @@ predMat <- diag(0, ncol = ncol(EVS), nrow = ncol(EVS))
 # Give it meaningful names
 dimnames(predMat) <- list(colnames(EVS), colnames(EVS))
 
-# Use best 25 predictors
-for (j in 1:ncol(pred_best25)) {
-    predMat[colnames(pred_best25)[j], pred_best25[, j]] <- 1
+# Use best 15 predictors
+for (j in 1:ncol(pred_best)) {
+    predMat[colnames(pred_best)[j], pred_best[, j]] <- 1
 }
 
 # Analysis model variables
@@ -476,6 +477,15 @@ predMat[model2_amv, model2_amv] <- 1
 
 # Add country to every model for multilevel safety
 predMat[, "country"] <- 1
+
+# And you can compare with the results quickpred
+predMat_qp <- quickpred(EVS)
+
+# Monitor differences between quickpred and our approach
+cbind(
+    rowSums(predMat),
+    rowSums(predMat_qp)
+)
 
 # Store predictor matrix -------------------------------------------------------
 
