@@ -58,8 +58,9 @@ saveRDS(R_session, paste0("../input/", date_time, "-R-session.rds"))
 mids_mi_expert <- mice(
     data = EVS,
     m = 1,
-    maxit = 5,
+    maxit = 20,
     method = meth,
+    predictorMatrix = predMat,
     seed = 20230822
 )
 
@@ -76,14 +77,15 @@ mids_mi_expert <- futuremice(
     # General mice arguments
     data = EVS,
     m = 5,
-    maxit = 5,
+    maxit = 20,
+    predictorMatrix = predMat,
     method = meth
 )
 
 # Save mids object
 saveRDS(
     object = mids_mi_expert,
-    file = paste0("../output/", date_time, "-mids-mi-gspcr.rds")
+    file = paste0("../output/", date_time, "-mids-mi-expert.rds")
 )
 
 # Make a meaningful covergence plot
