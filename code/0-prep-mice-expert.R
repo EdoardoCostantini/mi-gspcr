@@ -411,21 +411,43 @@ saveRDS(
     file = "../input/mi-model-expert-inputs.rds"
 )
 
-# Get the best 25 --------------------------------------------------------------
-
 # Read the saved file
 mats <- readRDS("../input/mi-model-expert-inputs.rds")
+
+# Compute correlations
+corMat <- abs(
+    cor(
+        data.matrix(EVS),
+        use = "pairwise.complete.obs",
+        method = "pearson"
+    )
+)
+
+# Define a variable of interest
+idx <- 10; colnames(EVS)[idx]
+
+# Bar plot all R2 values for response vector
+barplot(sort(sqrt(mat_relno[idx, -idx])))
+
+# Bar plot all R2 values
+barplot(sort(sqrt(mat_asso[idx, -idx])))
+
+# Bar plot correlations
+barplot(sort(v[idx, -idx]))
+
+# Compare best predictors
+data.frame(
+    R2 = names(tail(sort(sqrt(mat_asso[idx, -idx])), 10)),
+    cor = names(tail(sort(v[idx, -idx]), 10))
+)
+
+# Get the best 25 --------------------------------------------------------------
 
 # Combine the two sources of info
 maxc <- pmax(mats$mat_asso, mats$mat_relno)
 
 # Get best 25 predictors
 pred_best25 <- apply(maxc, 2, function(j) names(tail(sort(j), 25)))
-
-# Update predmat
-for(j in 1:ncol(pred_best25)){
-    predMat[colnames(pred_best25)[j], pred_best25[, j]] <- 1
-}
 
 # And you can compare with the results quickpred
 predMat_qp <- quickpred(EVS)
@@ -435,23 +457,6 @@ cbind(
     rowSums(predMat),
     rowSums(predMat_qp)
 )
-
-# What is the correlation version of this plot?
-nvar <- ncol(EVS)
-predictorMatrix <- matrix(0, nrow = nvar, ncol = nvar, dimnames = list(names(EVS), names(EVS)))
-x <- data.matrix(EVS)
-EVS$country
-head(data.matrix(EVS)[, 1:5])
-dim(EVS)
-r <- !is.na(x)
-v <- abs(cor(x, use = "pairwise.complete.obs", method = "pearson"))
-idx <- which(colnames(v) == no_predictors[1])
-barplot(tail(sort(v[idx, -idx]), 10))
-barplot(tail(sort(sqrt(r2)), 10))
-dim(v)
-barplot(sort(v[idx, -idx]))
-barplot(sort(sqrt(r2)))
-length(r2)
 
 # Predictor matrix -------------------------------------------------------------
 
@@ -471,8 +476,6 @@ predMat[model2_amv, model2_amv] <- 1
 
 # Add country to every model for multilevel safety
 predMat[, "country"] <- 1
-
-# Other items from checklist ---------------------------------------------------
 
 # Store predictor matrix -------------------------------------------------------
 
