@@ -87,6 +87,3 @@ saveRDS(
     object = mids_mi_expert,
     file = paste0("../output/", date_time, "-mids-mi-expert.rds")
 )
-
-# Make a meaningful covergence plot
-plot(mids_mi_expert)
