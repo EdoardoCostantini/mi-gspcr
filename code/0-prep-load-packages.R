@@ -2,7 +2,7 @@
 # Objective: Package loading
 # Author:    Edoardo Costantini
 # Created:   2023-07-12
-# Modified:  2023-08-04
+# Modified:  2023-08-09
 # Notes:     Run this script to store the information on the session info 
 #            before running analysis
 
@@ -14,6 +14,8 @@ library(labelled) # to extract variable labels
 library(mice)
 library(dplyr)
 library(forcats) # for fct_collapse() function to recode factors
+library(lattice)
+library(gridExtra) # to arrange lattice plots
 
 # Communicate versions of delicate packages to the user
 message(
