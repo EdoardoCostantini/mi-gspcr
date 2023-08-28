@@ -2,7 +2,7 @@
 # Objective: Diagnostics on imputed data
 # Author:    Edoardo Costantini
 # Created:   2023-08-17
-# Modified:  2023-08-17
+# Modified:  2023-08-28
 # Notes: 
 
 # Load Packages
@@ -17,18 +17,19 @@ meths <- readRDS("../input/mi-model-forms.rds")
 # MI-GSPCR ---------------------------------------------------------------------
 
 # Read imptued data
-mids_migspcr <- readRDS("../output/20230815-221458-mids-mi-gspcr.rds")
+mids_migspcr <- readRDS("../output/20230817-155605-mids-mi-gspcr.rds")
 
 # Convergence checks
 plot(
     mids_migspcr,
-    var_types$ord[1:10]
+    var_types$ord[1:10],
+    layout = c(2, 5)
 )
 
 # Density plots
 densityplot(
     mids_migspcr,
-    ~ v7
+    ~ v174_LR | .imp
 )
 
 # Plausible values
@@ -48,7 +49,7 @@ plot(
 # Density plots
 densityplot(
     mids_miexpert,
-    ~v7
+    ~ v174_LR | .imp
 )
 
 # Plausible values
