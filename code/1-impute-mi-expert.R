@@ -2,7 +2,7 @@
 # Objective: Impute prepared EVS data with MI-Expert imputaiton
 # Author:    Edoardo Costantini
 # Created:   2023-08-08
-# Modified:  2023-08-22
+# Modified:  2023-08-28
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -11,8 +11,28 @@
 source("0-prep-load-packages.R")
 
 # Load EVS data
-EVS <- readRDS("../input/ZA7500_processed.rds")
 EVS <- readRDS("../input/ZA7500_fc_processed.rds") # smaller version
+EVS <- readRDS("../input/ZA7500_processed.rds")
+
+# Prepare Western European countries for ImmerzeelEtAl2016
+EVS <- EVS %>%
+    filter(
+        country %in% c(
+            "Austria",
+            "Belgium",
+            "Denmark",
+            "Finland",
+            "France",
+            "Germany",
+            "Greece",
+            "Italy",
+            "Luxembourg",
+            "Netherlands",
+            "Norway",
+            "Swizerland"
+        )
+    )
+EVS$country <- droplevels(EVS$country)
 
 # Load variable types
 var_types <- readRDS("../input/var_types.rds")
