@@ -16,7 +16,7 @@ var_types <- readRDS("../input/var_types.rds")
 mids_migspcr <- readRDS("../output/20230817-155605-mids-mi-gspcr.rds")
 
 # Read imptued data
-mids_miexpert <- readRDS("../output/20230822-101619-mids-mi-expert.rds")
+mids_miexpert <- readRDS("../output/20230828-104250-mids-mi-expert.rds")
 
 # Estiamte models --------------------------------------------------------------
 
@@ -49,3 +49,48 @@ measures_compared <- lapply(measures, function(x) {
 
 # Give meaningful names
 names(measures_compared) <- measures
+
+# Plots ------------------------------------------------------------------------
+
+# > Side by side barplots ------------------------------------------------------
+
+# Decide what to plot
+(parameter <- colnames(pool_expert$pooled)[6])
+
+# Create a dataset for plot
+data_plot <- data.frame(
+    pool_expert$pooled[-1, 1, drop = FALSE],
+    expert = abs(round(pool_expert$pooled[-1, parameter], 5)),
+    gscpr = abs(round(pool_gspcr$pooled[-1, parameter], 5))
+)
+
+# Melt the data
+gg_shape <- reshape2::melt(data_plot, id.vars = "term", value.name = parameter)
+
+# Give useful names
+colnames(gg_shape) <- c("coefficient", "imputation", parameter)
+
+# Make plot
+ggplot(
+    data = gg_shape,
+    aes(
+        x = coefficient,
+        y = get(parameter),
+        fill = imputation
+    )
+) +
+    geom_bar(
+        stat = "identity",
+        position = position_dodge(),
+        alpha = 0.75
+    ) +
+    labs(
+        y = parameter
+        ) +
+    theme(
+        axis.text.x = element_text(
+            angle = 90,
+            vjust = 0.5,
+            hjust = 1
+        )
+    )
