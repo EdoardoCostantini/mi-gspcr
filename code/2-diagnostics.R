@@ -2,7 +2,7 @@
 # Objective: Diagnostics on imputed data
 # Author:    Edoardo Costantini
 # Created:   2023-08-17
-# Modified:  2023-08-28
+# Modified:  2023-09-04
 # Notes: 
 
 # Load Packages
@@ -38,7 +38,7 @@ stripplot(mids_migspcr, age_r3 ~ .imp, pch = 20, cex = 2)
 # MI-EXPERT --------------------------------------------------------------------
 
 # Read imptued data
-mids_miexpert <- readRDS("../output/20230822-101619-mids-mi-expert.rds")
+mids_miexpert <- readRDS("../output/20230829-100551-mids-mi-expert.rds")
 
 # Convergence checks
 plot(

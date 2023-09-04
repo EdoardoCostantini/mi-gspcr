@@ -16,3 +16,11 @@ With this project I want to tutorialise the imputation of missing data to showca
         2. Cross-validated
 
 After describing these choices in detail, I would like to present an application where we apply this method to the EVS data as is, with no synthetic data. The data should be imputed with the MI-GSPCR approach, with a guided description of how the decisions in point 2 were taken. The data should also be imputed based on a traditional mice imputation procedure and the steps taken to respond to step 2 should be explained clearly.
+
+## Folder contents
+
+### Output files
+
+- `20230815-221458-mids-mi-gspcr.rds` trail run of imputation with mi-gscpr method (`maxit = 5`)
+- `20230817-155605-mids-mi-gspcr.rds` main results of imputation with mi-gscpr method
+- `20230829-100551-mids-mi-expert.rds` main results of imputation with mi-expert method
