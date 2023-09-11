@@ -73,10 +73,14 @@ lm_model_3 <- paste0(model_vars[1], " ~ ", paste0(model_vars[-1], collapse = " +
 long_migspcr <- mice::complete(mids_migspcr, "long", include = TRUE)
 long_miexpert <- mice::complete(mids_miexpert, "long", include = TRUE)
 
+# Define complete cases based on analysis model
+cc_data <- mids_migspcr$data[rowSums(is.na(mids_migspcr$data)) == 0, model_vars]
+
 # Put datasets in the same list
 long_list <- list(
     migspcr = long_migspcr,
-    expert = long_miexpert
+    expert = long_miexpert,
+    cc = cc_data
 )
 
 # Compute derived variables on every dataset
@@ -137,7 +141,10 @@ long_list_derived <- lapply(
 })
 
 # Revert to mids objects
-mids_derived <- lapply(long_list_derived, as.mids)
+mids_derived <- lapply(long_list_derived[1:2], as.mids)
+
+# Attach complete cases to mids
+mids_derived$cc <- long_list_derived$cc
 
 # Estimate model based on GSPCR
 fits <- lapply(
@@ -165,7 +172,7 @@ fits <- lapply(
 
 # Pool GSPCR
 pools <- lapply(
-    fits,
+    fits[1:2],
     pool
 )
 
@@ -184,19 +191,45 @@ measures_compared <- lapply(measures, function(x) {
 # Give meaningful names
 names(measures_compared) <- measures
 
+# Append CC analysis that is applicable
+
+# Estimates
+cbind(
+    measures_compared$estimate,
+    CC = summary(fits$cc)$coefficients[, "Estimate"]
+)
+
+# Standard errors
+cbind(
+    measures_compared$ubar,
+    CC = summary(fits$cc)$coefficients[, "Std. Error"]
+)
+
 # Plots ------------------------------------------------------------------------
 
 # Decide what to plot
-parameters <- c("estimate", "ubar", "b", "fmi")
-parameter <- "df"
+parameters <- c("estimate", "t", "ubar", "b")
+parameter <- "estimate"
 
 # Make a plot for every measure
-gg_plots <- lapply(parameters[-1], function(parameter) {
+gg_plots <- lapply(parameters, function(parameter) {
+
+    if (parameter == "estimate") {
+        CC_part <- summary(fits$cc)$coefficients[, "Estimate"]
+    } else {
+        if (parameter == "t") {
+            CC_part <- summary(fits$cc)$coefficients[, "Std. Error"]
+        } else {
+            CC_part <- rep(NA, nrow(pools$expert$pooled))
+        }
+    }
+
     # Create a dataset for plot
     data_plot <- data.frame(
         pools$expert$pooled[-1, 1, drop = FALSE],
+        gscpr = abs(round(pools$migspcr$pooled[-1, parameter], 10)),
         expert = abs(round(pools$expert$pooled[-1, parameter], 10)),
-        gscpr = abs(round(pools$migspcr$pooled[-1, parameter], 10))
+        CC = abs(CC_part[-1])
     )
 
     # Melt the data
@@ -207,28 +240,27 @@ gg_plots <- lapply(parameters[-1], function(parameter) {
 
     # Make plot
     gg_plot <- ggplot(
-        data = gg_shape,
+        data = na.omit(gg_shape),
         aes(
             x = coefficient,
             y = get(parameter),
             fill = imputation
         )
     ) +
-        scale_fill_manual(values = c("#D4D4D4", "#ffffff")) +
+        scale_fill_manual(values = c("#aaaaaa", "#D4D4D4", "#ffffff")) +
         geom_bar(
             stat = "identity",
             position = position_dodge(),
             colour = "black",
             alpha = 0.75
         ) +
-        coord_flip() +
         labs(
             y = parameter
         ) +
         theme(
-            axis.text.y = element_blank(),
-            axis.ticks.y = element_blank(),
-            axis.title.y = element_blank(),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.title.x = element_blank(),
             # Grid
             panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
             # remove the vertical grid lines
@@ -252,22 +284,22 @@ gg_plots <- lapply(parameters[-1], function(parameter) {
 # Create a dataset for plot
 data_plot <- data.frame(
     pools$expert$pooled[-1, 1, drop = FALSE],
-    expert = abs(round(pools$expert$pooled[-1, "estimate"], 10)),
-    gscpr = abs(round(pools$migspcr$pooled[-1, "estimate"], 10))
+    gscpr = abs(round(pools$migspcr$pooled[-1, "fmi"], 10)),
+    expert = abs(round(pools$expert$pooled[-1, "fmi"], 10))
 )
 
 # Melt the data
-gg_shape <- reshape2::melt(data_plot, id.vars = "term", value.name = "estimate")
+gg_shape <- reshape2::melt(data_plot, id.vars = "term", value.name = "fmi")
 
 # Give useful names
-colnames(gg_shape) <- c("coefficient", "imputation", "estimate")
+colnames(gg_shape) <- c("coefficient", "imputation", "fmi")
 
 # Make plot
 gg_plot_fmi <- ggplot(
     data = gg_shape,
     aes(
         x = coefficient,
-        y = get("estimate"),
+        y = get("fmi"),
         fill = imputation
     )
 ) +
@@ -277,24 +309,21 @@ gg_plot_fmi <- ggplot(
         colour = "black",
         alpha = 0.75
     ) +
-    coord_flip() +
     # Choose colors for fill
-    scale_fill_manual(values = c("#D4D4D4", "#ffffff")) +
+    scale_fill_manual(values = c("#aaaaaa", "#D4D4D4", "#ffffff")) +
     labs(
-        y = "estimate"
+        y = "fmi"
     ) +
     theme(
-        # axis.text.y = element_text(
-        #     angle = 270, # 90
-        #     vjust = 0.5,
-        #     hjust = 0 # 1
-        # ),
+        axis.text.x = element_text(
+            angle = 315, # 90
+            vjust = 0.5,
+            hjust = 0 # 1
+        ),
         # Grid
         panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
-        # remove the vertical grid lines
-           panel.grid.major.x = element_blank() ,
-           # explicitly set the horizontal lines (or they will disappear too)
-           panel.grid.major.y = element_line( size=.1, color="black" ),
+        #    panel.grid.major.x = element_line( size=.1, color="black" ),
+        #    panel.grid.major.y = element_blank() ,
         # Legend
         legend.title = element_blank(),
         legend.position = "right",
@@ -304,9 +333,9 @@ gg_plot_fmi <- ggplot(
     )
 
 # Patchwork
-gg_plot_fmi + gg_plots[[1]] + gg_plots[[2]] + gg_plots[[3]] +
+gg_plots[[1]] / gg_plots[[2]] / gg_plots[[3]] / gg_plots[[4]] / gg_plot_fmi + 
     plot_layout(
-        widths = unit(rep(10, 4), c("cm", "cm", "cm")),
+        # widths = unit(rep(10, 4), c("cm", "cm", "cm")),
         guides = "collect"
     ) &
     theme(legend.position = "top")
