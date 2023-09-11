@@ -258,7 +258,7 @@ parameters <- c("estimate", "ubar", "b", "fmi")
 parameter <- "df"
 
 # Make a plot for every measure
-gg_plots <- lapply(parameters[-length(parameters)], function(parameter) {
+gg_plots <- lapply(parameters[-1], function(parameter) {
     # Create a dataset for plot
     data_plot <- data.frame(
         pool_expert$pooled[-1, 1, drop = FALSE],
@@ -281,22 +281,27 @@ gg_plots <- lapply(parameters[-length(parameters)], function(parameter) {
             fill = imputation
         )
     ) +
-    scale_fill_manual(values = c("#D4D4D4", "#ffffff")) +
+        scale_fill_manual(values = c("#D4D4D4", "#ffffff")) +
         geom_bar(
             stat = "identity",
             position = position_dodge(),
             colour = "black",
             alpha = 0.75
         ) +
+        coord_flip() +
         labs(
             y = parameter
         ) +
         theme(
-            axis.text.x = element_blank(),
-            axis.ticks.x = element_blank(),
-            axis.title.x = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            axis.title.y = element_blank(),
             # Grid
             panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
+            # remove the vertical grid lines
+           panel.grid.major.x = element_blank() ,
+           # explicitly set the horizontal lines (or they will disappear too)
+           panel.grid.major.y = element_line( size=.1, color="black" ),
             # Legend
             legend.title = element_blank(),
             legend.position = "right",
@@ -314,22 +319,22 @@ gg_plots <- lapply(parameters[-length(parameters)], function(parameter) {
 # Create a dataset for plot
 data_plot <- data.frame(
     pool_expert$pooled[-1, 1, drop = FALSE],
-    expert = abs(round(pool_expert$pooled[-1, "fmi"], 10)),
-    gscpr = abs(round(pool_gspcr$pooled[-1, "fmi"], 10))
+    expert = abs(round(pool_expert$pooled[-1, "estimate"], 10)),
+    gscpr = abs(round(pool_gspcr$pooled[-1, "estimate"], 10))
 )
 
 # Melt the data
-gg_shape <- reshape2::melt(data_plot, id.vars = "term", value.name = "fmi")
+gg_shape <- reshape2::melt(data_plot, id.vars = "term", value.name = "estimate")
 
 # Give useful names
-colnames(gg_shape) <- c("coefficient", "imputation", "fmi")
+colnames(gg_shape) <- c("coefficient", "imputation", "estimate")
 
 # Make plot
 gg_plot_fmi <- ggplot(
     data = gg_shape,
     aes(
         x = coefficient,
-        y = get("fmi"),
+        y = get("estimate"),
         fill = imputation
     )
 ) +
@@ -339,20 +344,24 @@ gg_plot_fmi <- ggplot(
         colour = "black",
         alpha = 0.75
     ) +
+    coord_flip() +
     # Choose colors for fill
-  scale_fill_manual(values = c("#D4D4D4", "#ffffff")) +
+    scale_fill_manual(values = c("#D4D4D4", "#ffffff")) +
     labs(
-        y = "fmi"
+        y = "estimate"
     ) +
     theme(
-        axis.text.x = element_text(
-            angle = 270, # 90
-            vjust = 0.5,
-            hjust = 0 # 1
-        ),
-        axis.title.x = element_blank(),
+        # axis.text.y = element_text(
+        #     angle = 270, # 90
+        #     vjust = 0.5,
+        #     hjust = 0 # 1
+        # ),
         # Grid
         panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
+        # remove the vertical grid lines
+           panel.grid.major.x = element_blank() ,
+           # explicitly set the horizontal lines (or they will disappear too)
+           panel.grid.major.y = element_line( size=.1, color="black" ),
         # Legend
         legend.title = element_blank(),
         legend.position = "right",
@@ -363,10 +372,9 @@ gg_plot_fmi <- ggplot(
 
 # Patchwork
 
-gg_plots[[1]] / gg_plots[[2]] / gg_plots[[3]] / gg_plot_fmi
-
-gg_plots[[1]] / gg_plots[[2]] / gg_plots[[3]] / gg_plot_fmi + 
+gg_plot_fmi + gg_plots[[1]] + gg_plots[[2]] + gg_plots[[3]] +
     plot_layout(
+        widths = unit(rep(10, 4), c("cm", "cm", "cm")),
         guides = "collect"
     ) &
-    theme(legend.position = "right")
+    theme(legend.position = "top")
