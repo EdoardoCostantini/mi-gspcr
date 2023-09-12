@@ -2,7 +2,7 @@
 # Objective: Analysis of pooled data
 # Author:    Edoardo Costantini
 # Created:   2023-08-17
-# Modified:  2023-09-11
+# Modified:  2023-09-12
 # Notes:
 
 # Load Packages
@@ -335,8 +335,6 @@ gg_plot_fmi <- ggplot(
         ),
         # Grid
         panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
-        #    panel.grid.major.x = element_line( size=.1, color="black" ),
-        #    panel.grid.major.y = element_blank() ,
         # Legend
         legend.title = element_blank(),
         legend.position = "right",
@@ -348,7 +346,6 @@ gg_plot_fmi <- ggplot(
 # Patchwork
 gg_plots[[1]] / gg_plots[[2]] / gg_plots[[3]] / gg_plots[[4]] / gg_plot_fmi +
     plot_layout(
-        # widths = unit(rep(10, 4), c("cm", "cm", "cm")),
         guides = "collect"
     ) &
     theme(legend.position = "top")
