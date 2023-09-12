@@ -85,60 +85,70 @@ long_list <- list(
 
 # Compute derived variables on every dataset
 long_list_derived <- lapply(
-    long_list, 
+    long_list,
     function(dat) {
-    within(
-        data = dat,
-        expr = {
-            Female <- fct_collapse(v225,
-                .no = levels(dat$v225)[1],
-                .yes = levels(dat$v225)[2]
-            )
-            Employment <- fct_collapse(v246_egp,
-                .empl = levels(dat$v246_egp)[c(2:5, 8:11)],
-                .self = levels(dat$v246_egp)[c(6, 7, 12)],
-                .unem = c("not applicable")
-            )
-            Occupation <- v246_egp
-            nat_Att <- (as.numeric(v185) + as.numeric(v186) + as.numeric(v187)) / 3
-            Strict_Leader <- factor(
-                v145,
-                levels = levels(v145),
-                ordered = FALSE
-            )
-            Strict_Order <- v110
-            pol_Int <- as.numeric(v97)
-            pol_Act <- (as.numeric(v98) + as.numeric(v99) + as.numeric(v100) + as.numeric(v101)) / 4
-            Age <- age_r3
-            Education <- fct_collapse(v243_ISCED_1,
-                .primary = levels(dat$v243_ISCED_1)[1:2],
-                .secondary = levels(dat$v243_ISCED_1)[3:5],
-                .tertiary = levels(dat$v243_ISCED_1)[6:9]
-            )
-            Marital <- fct_collapse(v234,
-                .has_P = levels(dat$v234)[1:2],
-                .never = levels(dat$v234)[6],
-                .had_P = levels(dat$v234)[3:5]
-            )
-            Urb <- fct_collapse(factor(v276_r),
-                .less5000 = 1,
-                .less20000 = 2,
-                .less100000 = 3,
-                .more100000 = 4:5
-            )
-            Rel_attendance <- fct_collapse(v54,
-                .sometimes = levels(dat$v54)[4:6],
-                .never = levels(dat$v54)[7],
-                .often = levels(dat$v54)[1:3]
-            )
-            Denom <- fct_collapse(v52_r,
-                .none = levels(dat$v52_r)[2],
-                .christian = levels(dat$v52_r)[1],
-                .other = levels(dat$v52_r)[3:5]
-            )
-        }
-    )
-})
+        within(
+            data = dat,
+            expr = {
+                Female <- fct_collapse(v225,
+                    .no = levels(dat$v225)[1],
+                    .yes = levels(dat$v225)[2]
+                )
+                Employment <- fct_collapse(v246_egp,
+                    .empl = levels(dat$v246_egp)[c(2:5, 8:11)],
+                    .self = levels(dat$v246_egp)[c(6, 7, 12)],
+                    .unem = c("not applicable")
+                )
+                Occupation <- factor(
+                    v246_egp,
+                    levels = levels(v246_egp),
+                    labels = paste0(".", gsub("\\s*:(.*)", "", levels(v246_egp)))
+                )
+                Nativist <- (as.numeric(v185) + as.numeric(v186) + as.numeric(v187)) / 3
+                Leader <- factor(
+                    v145,
+                    levels = levels(v145),
+                    labels = paste0(".", levels(v145)),
+                    ordered = FALSE
+                )
+                Issue <- factor(
+                    v110,
+                    levels = levels(v110),
+                    labels = paste0(".", c("order", "say", "prices", "speech"))
+                )
+                Political_interest <- as.numeric(v97)
+                Political_action <- (as.numeric(v98) + as.numeric(v99) + as.numeric(v100) + as.numeric(v101)) / 4
+                Age <- age_r3
+                Education <- fct_collapse(v243_ISCED_1,
+                    .primary = levels(dat$v243_ISCED_1)[1:2],
+                    .secondary = levels(dat$v243_ISCED_1)[3:5],
+                    .tertiary = levels(dat$v243_ISCED_1)[6:9]
+                )
+                Married <- fct_collapse(v234,
+                    .yes = levels(dat$v234)[1:2],
+                    .no = levels(dat$v234)[6],
+                    .past = levels(dat$v234)[3:5]
+                )
+                Urb <- fct_collapse(factor(v276_r),
+                    .less5000 = 1,
+                    .less20000 = 2,
+                    .less100000 = 3,
+                    .more100000 = 4:5
+                )
+                Attendance <- fct_collapse(v54,
+                    .sometimes = levels(dat$v54)[4:6],
+                    .never = levels(dat$v54)[7],
+                    .often = levels(dat$v54)[1:3]
+                )
+                Denom <- fct_collapse(v52_r,
+                    .none = levels(dat$v52_r)[2],
+                    .christian = levels(dat$v52_r)[1],
+                    .other = levels(dat$v52_r)[3:5]
+                )
+            }
+        )
+    }
+)
 
 # Revert to mids objects
 mids_derived <- lapply(long_list_derived[1:2], as.mids)
@@ -146,9 +156,15 @@ mids_derived <- lapply(long_list_derived[1:2], as.mids)
 # Attach complete cases to mids
 mids_derived$cc <- long_list_derived$cc
 
+# Save datasets for future processing
+saveRDS(mids_derived, "../output/data-estimation.R")
+
+# Read the data
+data_est <- readRDS("../output/data-estimation.R")
+
 # Estimate model based on GSPCR
 fits <- lapply(
-    mids_derived,
+    data_est,
     function(x){
         with(
             x,
@@ -156,15 +172,15 @@ fits <- lapply(
                 Female +
                 # Employment +
                 Occupation +
-                nat_Att +
-                Strict_Leader +
-                Strict_Order +
-                pol_Int +
-                pol_Act +
-                nat_Att +
-                Marital +
+                Nativist +
+                Leader +
+                Issue +
+                Political_interest +
+                Political_action +
+                Nativist +
+                Married +
                 Urb +
-                Rel_attendance +
+                Attendance +
                 Denom)
         )
     }
@@ -191,15 +207,13 @@ measures_compared <- lapply(measures, function(x) {
 # Give meaningful names
 names(measures_compared) <- measures
 
-# Append CC analysis that is applicable
-
-# Estimates
+# Append CC analysis Estimates
 cbind(
     measures_compared$estimate,
     CC = summary(fits$cc)$coefficients[, "Estimate"]
 )
 
-# Standard errors
+# Append CC analysis Standard errors
 cbind(
     measures_compared$ubar,
     CC = summary(fits$cc)$coefficients[, "Std. Error"]
