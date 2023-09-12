@@ -157,10 +157,10 @@ mids_derived <- lapply(long_list_derived[1:2], as.mids)
 mids_derived$cc <- long_list_derived$cc
 
 # Save datasets for future processing
-saveRDS(mids_derived, "../output/data-estimation.R")
+saveRDS(mids_derived, "../output/data-estimation.rds")
 
 # Read the data
-data_est <- readRDS("../output/data-estimation.R")
+data_est <- readRDS("../output/data-estimation.rds")
 
 # Estimate model based on GSPCR
 fits <- lapply(
