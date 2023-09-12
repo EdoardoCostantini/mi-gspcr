@@ -297,7 +297,7 @@ gg_plots <- lapply(parameters, function(parameter) {
             term %in% terms,
             variable == parameter
         ) %>%
-        mutate(value = abs(value)) %>% 
+        mutate(value = abs(value)) %>%
         ggplot(
             aes(
                 x = term,
@@ -325,7 +325,11 @@ gg_plots <- lapply(parameters, function(parameter) {
             axis.ticks.x = element_blank(),
             axis.title.x = element_blank(),
             # Grid
-            panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
+            panel.border = element_rect(
+                color = "#D4D4D4",
+                fill = NA,
+                linewidth = .5
+            ),
             # remove the vertical grid lines
             panel.grid.major.x = element_blank(),
             # explicitly set the horizontal lines (or they will disappear too)
