@@ -3,7 +3,7 @@
 # Author:    Edoardo Costantini
 # Created:   2023-08-17
 # Modified:  2023-09-11
-# Notes: 
+# Notes:
 
 # Load Packages
 source("0-prep-load-packages.R")
@@ -165,7 +165,7 @@ data_est <- readRDS("../output/data-estimation.R")
 # Estimate model based on GSPCR
 fits <- lapply(
     data_est,
-    function(x){
+    function(x) {
         with(
             x,
             lm(v174_LR ~
@@ -227,7 +227,6 @@ parameter <- "estimate"
 
 # Make a plot for every measure
 gg_plots <- lapply(parameters, function(parameter) {
-
     if (parameter == "estimate") {
         CC_part <- summary(fits$cc)$coefficients[, "Estimate"]
     } else {
@@ -278,9 +277,9 @@ gg_plots <- lapply(parameters, function(parameter) {
             # Grid
             panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
             # remove the vertical grid lines
-           panel.grid.major.x = element_blank() ,
-           # explicitly set the horizontal lines (or they will disappear too)
-           panel.grid.major.y = element_line( size=.1, color="black" ),
+            panel.grid.major.x = element_blank(),
+            # explicitly set the horizontal lines (or they will disappear too)
+            panel.grid.major.y = element_line(size = .1, color = "black"),
             # Legend
             legend.title = element_blank(),
             legend.position = "right",
@@ -347,7 +346,7 @@ gg_plot_fmi <- ggplot(
     )
 
 # Patchwork
-gg_plots[[1]] / gg_plots[[2]] / gg_plots[[3]] / gg_plots[[4]] / gg_plot_fmi + 
+gg_plots[[1]] / gg_plots[[2]] / gg_plots[[3]] / gg_plots[[4]] / gg_plot_fmi +
     plot_layout(
         # widths = unit(rep(10, 4), c("cm", "cm", "cm")),
         guides = "collect"
