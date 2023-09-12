@@ -194,8 +194,8 @@ pools <- lapply(
 
 # Attach CC results
 estiamtes <- list(
-    migspcr = pools$migspcr,
-    expert = pools$expert,
+    migspcr = pools$migspcr$pooled,
+    expert = pools$expert$pooled,
     cc = summary(fits$cc)$coefficients
 )
 
@@ -211,9 +211,9 @@ measures <- c("estimate", "ubar", "b", "t", "riv", "lambda", "fmi")
 # Compare one by one
 measures_compared <- lapply(measures, function(x) {
     data.frame(
-        estiamtes$expert$pooled[, 1:2],
-        expert = round(estiamtes$expert$pooled[, x], 5),
-        gscpr = round(estiamtes$migspcr$pooled[, x], 5)
+        estiamtes$expert[, 1:2],
+        expert = round(estiamtes$expert[, x], 5),
+        gscpr = round(estiamtes$migspcr[, x], 5)
     )
 })
 
@@ -246,15 +246,15 @@ gg_plots <- lapply(parameters, function(parameter) {
         if (parameter == "t") {
             CC_part <- estiamtes$cc[, "Std. Error"]
         } else {
-            CC_part <- rep(NA, nrow(estiamtes$expert$pooled))
+            CC_part <- rep(NA, nrow(estiamtes$expert))
         }
     }
 
     # Create a dataset for plot
     data_plot <- data.frame(
-        estiamtes$expert$pooled[-1, 1, drop = FALSE],
-        gscpr = abs(round(estiamtes$migspcr$pooled[-1, parameter], 10)),
-        expert = abs(round(estiamtes$expert$pooled[-1, parameter], 10)),
+        estiamtes$expert[-1, 1, drop = FALSE],
+        gscpr = abs(round(estiamtes$migspcr[-1, parameter], 10)),
+        expert = abs(round(estiamtes$expert[-1, parameter], 10)),
         CC = abs(CC_part[-1])
     )
 
@@ -308,9 +308,9 @@ gg_plots <- lapply(parameters, function(parameter) {
 
 # Create a dataset for plot
 data_plot <- data.frame(
-    estiamtes$expert$pooled[-1, 1, drop = FALSE],
-    gscpr = abs(round(estiamtes$migspcr$pooled[-1, "fmi"], 10)),
-    expert = abs(round(estiamtes$expert$pooled[-1, "fmi"], 10))
+    estiamtes$expert[-1, 1, drop = FALSE],
+    gscpr = abs(round(estiamtes$migspcr[-1, "fmi"], 10)),
+    expert = abs(round(estiamtes$expert[-1, "fmi"], 10))
 )
 
 # Melt the data
