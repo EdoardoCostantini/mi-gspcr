@@ -282,7 +282,6 @@ gg_plots <- lapply(parameters, function(parameter) {
             panel.grid.major.y = element_line(size = .1, color = "black"),
             # Legend
             legend.title = element_blank(),
-            legend.position = "right",
             legend.key.size = unit(0.3, "cm"),
             # Background
             panel.background = element_rect(fill = NA, color = "gray")
@@ -337,7 +336,6 @@ gg_plot_fmi <- ggplot(
         panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
         # Legend
         legend.title = element_blank(),
-        legend.position = "right",
         legend.key.size = unit(0.3, "cm"),
         # Background
         panel.background = element_rect(fill = NA, color = "gray")
