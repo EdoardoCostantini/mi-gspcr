@@ -332,6 +332,7 @@ gg_plot_fmi <- ggplot(
             vjust = 0.5,
             hjust = 0 # 1
         ),
+        axis.title.x = element_blank(),
         # Grid
         panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
         # Legend
