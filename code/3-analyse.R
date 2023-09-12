@@ -199,12 +199,6 @@ estiamtes <- list(
     cc = summary(fits$cc)$coefficients
 )
 
-# Save datasets for future processing
-saveRDS(estiamtes, "../output/estimation-results.rds")
-
-# Read the data
-estiamtes <- readRDS("../output/estimation-results.rds")
-
 # Define what to compare
 measures <- c("estimate", "ubar", "b", "t", "riv", "lambda", "fmi")
 
@@ -232,47 +226,85 @@ cbind(
     CC = estiamtes$cc[, "Std. Error"]
 )
 
+# Prepare data for plots -------------------------------------------------------
+
+# Melt every MI method
+estimates_mi <- lapply(
+    c("migspcr", "expert"),
+    function(x) {
+        # Attach method name
+        estiamtes[[x]] <- cbind(
+            method = factor(x),
+            estiamtes[[x]]
+        )
+
+        # Reshape for ggplot
+        reshape2::melt(estiamtes[[x]], id.vars = c("term", "method"))
+    }
+)
+
+# Append them
+estimates_mi_gg_shape <- do.call(rbind, estimates_mi)
+
+# Define the CC results
+estimates_cc <- data.frame(estiamtes$cc)
+
+# Harmonize names of CC results
+colnames(estimates_cc) <- c("estimate", "t", "tvalue", "pvalue")
+
+# Attach a term column
+estimates_cc <- cbind(
+    term = row.names(summary(fits$cc)$coefficients),
+    estimates_cc
+)
+
+# Attach a term column
+estimates_cc <- cbind(
+    term = row.names(summary(fits$cc)$coefficients),
+    method = factor("cc"),
+    estimates_cc
+)
+
+# Shape CC estimates for plot
+estimates_cc_gg_shape <- reshape2::melt(
+    estimates_cc,
+    id.vars = c("term", "method")
+)
+
+# Collect results
+estimates_gg_shape <- rbind(
+    estimates_mi_gg_shape,
+    estimates_cc_gg_shape
+)
+
+# Save datasets for future processing
+saveRDS(estimates_gg_shape, "../output/estimates-gg-shape.rds")
+
+# Read the data
+gg_shape <- readRDS("../output/estimates-gg-shape.rds")
+
 # Plots ------------------------------------------------------------------------
 
 # Decide what to plot
-parameters <- c("estimate", "t", "ubar", "b")
+parameters <- c("estimate", "t", "ubar", "b", "fmi")
 parameter <- "estimate"
+terms <- levels(gg_shape$term)[-1]
 
 # Make a plot for every measure
 gg_plots <- lapply(parameters, function(parameter) {
-    if (parameter == "estimate") {
-        CC_part <- estiamtes$cc[, "Estimate"]
-    } else {
-        if (parameter == "t") {
-            CC_part <- estiamtes$cc[, "Std. Error"]
-        } else {
-            CC_part <- rep(NA, nrow(estiamtes$expert))
-        }
-    }
-
-    # Create a dataset for plot
-    data_plot <- data.frame(
-        estiamtes$expert[-1, 1, drop = FALSE],
-        gscpr = abs(round(estiamtes$migspcr[-1, parameter], 10)),
-        expert = abs(round(estiamtes$expert[-1, parameter], 10)),
-        CC = abs(CC_part[-1])
-    )
-
-    # Melt the data
-    gg_shape <- reshape2::melt(data_plot, id.vars = "term", value.name = parameter)
-
-    # Give useful names
-    colnames(gg_shape) <- c("coefficient", "imputation", parameter)
-
-    # Make plot
-    gg_plot <- ggplot(
-        data = na.omit(gg_shape),
-        aes(
-            x = coefficient,
-            y = get(parameter),
-            fill = imputation
-        )
-    ) +
+    gg_shape %>%
+        filter(
+            term %in% terms,
+            variable == parameter
+        ) %>%
+        mutate(value = abs(value)) %>% 
+        ggplot(
+            aes(
+                x = term,
+                y = value,
+                fill = method
+            )
+        ) +
         scale_fill_manual(values = c("#aaaaaa", "#D4D4D4", "#ffffff")) +
         geom_bar(
             stat = "identity",
@@ -284,7 +316,12 @@ gg_plots <- lapply(parameters, function(parameter) {
             y = parameter
         ) +
         theme(
-            axis.text.x = element_blank(),
+            # X axis layout
+            axis.text.x = element_text(
+                angle = 315,
+                vjust = 0.5,
+                hjust = 0
+            ),
             axis.ticks.x = element_blank(),
             axis.title.x = element_blank(),
             # Grid
@@ -299,64 +336,40 @@ gg_plots <- lapply(parameters, function(parameter) {
             # Background
             panel.background = element_rect(fill = NA, color = "gray")
         )
-
-    # Return
-    return(gg_plot)
 })
 
-# Make FMI plot ----------------------------------------------------------------
+# Patchwork --------------------------------------------------------------------
 
-# Create a dataset for plot
-data_plot <- data.frame(
-    estiamtes$expert[-1, 1, drop = FALSE],
-    gscpr = abs(round(estiamtes$migspcr[-1, "fmi"], 10)),
-    expert = abs(round(estiamtes$expert[-1, "fmi"], 10))
-)
-
-# Melt the data
-gg_shape <- reshape2::melt(data_plot, id.vars = "term", value.name = "fmi")
-
-# Give useful names
-colnames(gg_shape) <- c("coefficient", "imputation", "fmi")
-
-# Make plot
-gg_plot_fmi <- ggplot(
-    data = gg_shape,
-    aes(
-        x = coefficient,
-        y = get("fmi"),
-        fill = imputation
-    )
+# Estiamtes and variability
+(
+    gg_plots[[1]] +
+        ylab("Estimate") +
+        theme(
+            axis.text.x = element_blank()
+        )
+) / (
+    gg_plots[[2]] +
+        ylab("Variability")
 ) +
-    geom_bar(
-        stat = "identity",
-        position = position_dodge(),
-        colour = "black",
-        alpha = 0.75
-    ) +
-    # Choose colors for fill
-    scale_fill_manual(values = c("#aaaaaa", "#D4D4D4", "#ffffff")) +
-    labs(
-        y = "fmi"
-    ) +
-    theme(
-        axis.text.x = element_text(
-            angle = 315, # 90
-            vjust = 0.5,
-            hjust = 0 # 1
-        ),
-        axis.title.x = element_blank(),
-        # Grid
-        panel.border = element_rect(color = "#D4D4D4", fill = NA, size = .5),
-        # Legend
-        legend.title = element_blank(),
-        legend.key.size = unit(0.3, "cm"),
-        # Background
-        panel.background = element_rect(fill = NA, color = "gray")
-    )
+    plot_layout(
+        guides = "collect"
+    ) &
+    theme(legend.position = "top")
 
-# Patchwork
-gg_plots[[1]] / gg_plots[[2]] / gg_plots[[3]] / gg_plots[[4]] / gg_plot_fmi +
+# MI variability# Patchwork
+(
+    gg_plots[[3]] +
+        theme(
+            axis.text.x = element_blank()
+        )
+) / (
+    gg_plots[[4]] +
+        theme(
+            axis.text.x = element_blank()
+        )
+) / (
+    gg_plots[[5]]
+) +
     plot_layout(
         guides = "collect"
     ) &
