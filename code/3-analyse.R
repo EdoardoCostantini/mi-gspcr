@@ -157,10 +157,10 @@ mids_derived <- lapply(long_list_derived[1:2], as.mids)
 mids_derived$cc <- long_list_derived$cc
 
 # Save datasets for future processing
-saveRDS(mids_derived, "../output/data-estimation.rds")
+saveRDS(mids_derived, "../output/estimation-data.rds")
 
 # Read the data
-data_est <- readRDS("../output/data-estimation.rds")
+data_est <- readRDS("../output/estimation-data.rds")
 
 # Estimate model based on GSPCR
 fits <- lapply(
@@ -186,23 +186,24 @@ fits <- lapply(
     }
 )
 
-# Save datasets for future processing
-saveRDS(fits, "../output/fits-results.rds")
-
-# Read the data
-fits <- readRDS("../output/fits-results.rds")
-
 # Pool GSPCR
 pools <- lapply(
     fits[1:2],
     pool
 )
 
+# Attach CC results
+estiamtes <- list(
+    migspcr = pools$migspcr,
+    expert = pools$expert,
+    cc = summary(fits$cc)$coefficients
+)
+
 # Save datasets for future processing
-saveRDS(pools, "../output/pooled-results.rds")
+saveRDS(estiamtes, "../output/estimation-results.rds")
 
 # Read the data
-pools <- readRDS("../output/pooled-results.rds")
+estiamtes <- readRDS("../output/estimation-results.rds")
 
 # Define what to compare
 measures <- c("estimate", "ubar", "b", "t", "riv", "lambda", "fmi")
@@ -210,9 +211,9 @@ measures <- c("estimate", "ubar", "b", "t", "riv", "lambda", "fmi")
 # Compare one by one
 measures_compared <- lapply(measures, function(x) {
     data.frame(
-        pools$expert$pooled[, 1:2],
-        expert = round(pools$expert$pooled[, x], 5),
-        gscpr = round(pools$migspcr$pooled[, x], 5)
+        estiamtes$expert$pooled[, 1:2],
+        expert = round(estiamtes$expert$pooled[, x], 5),
+        gscpr = round(estiamtes$migspcr$pooled[, x], 5)
     )
 })
 
@@ -222,13 +223,13 @@ names(measures_compared) <- measures
 # Append CC analysis Estimates
 cbind(
     measures_compared$estimate,
-    CC = summary(fits$cc)$coefficients[, "Estimate"]
+    CC = estiamtes$cc[, "Estimate"]
 )
 
 # Append CC analysis Standard errors
 cbind(
     measures_compared$ubar,
-    CC = summary(fits$cc)$coefficients[, "Std. Error"]
+    CC = estiamtes$cc[, "Std. Error"]
 )
 
 # Plots ------------------------------------------------------------------------
@@ -240,20 +241,20 @@ parameter <- "estimate"
 # Make a plot for every measure
 gg_plots <- lapply(parameters, function(parameter) {
     if (parameter == "estimate") {
-        CC_part <- summary(fits$cc)$coefficients[, "Estimate"]
+        CC_part <- estiamtes$cc[, "Estimate"]
     } else {
         if (parameter == "t") {
-            CC_part <- summary(fits$cc)$coefficients[, "Std. Error"]
+            CC_part <- estiamtes$cc[, "Std. Error"]
         } else {
-            CC_part <- rep(NA, nrow(pools$expert$pooled))
+            CC_part <- rep(NA, nrow(estiamtes$expert$pooled))
         }
     }
 
     # Create a dataset for plot
     data_plot <- data.frame(
-        pools$expert$pooled[-1, 1, drop = FALSE],
-        gscpr = abs(round(pools$migspcr$pooled[-1, parameter], 10)),
-        expert = abs(round(pools$expert$pooled[-1, parameter], 10)),
+        estiamtes$expert$pooled[-1, 1, drop = FALSE],
+        gscpr = abs(round(estiamtes$migspcr$pooled[-1, parameter], 10)),
+        expert = abs(round(estiamtes$expert$pooled[-1, parameter], 10)),
         CC = abs(CC_part[-1])
     )
 
@@ -307,9 +308,9 @@ gg_plots <- lapply(parameters, function(parameter) {
 
 # Create a dataset for plot
 data_plot <- data.frame(
-    pools$expert$pooled[-1, 1, drop = FALSE],
-    gscpr = abs(round(pools$migspcr$pooled[-1, "fmi"], 10)),
-    expert = abs(round(pools$expert$pooled[-1, "fmi"], 10))
+    estiamtes$expert$pooled[-1, 1, drop = FALSE],
+    gscpr = abs(round(estiamtes$migspcr$pooled[-1, "fmi"], 10)),
+    expert = abs(round(estiamtes$expert$pooled[-1, "fmi"], 10))
 )
 
 # Melt the data
