@@ -333,7 +333,10 @@ gg_plots <- lapply(parameters, function(parameter) {
             # remove the vertical grid lines
             panel.grid.major.x = element_blank(),
             # explicitly set the horizontal lines (or they will disappear too)
-            panel.grid.major.y = element_line(size = .1, color = "black"),
+            panel.grid.major.y = element_line(
+                linewidth = .1,
+                color = "black"
+            ),
             # Legend
             legend.title = element_blank(),
             legend.key.size = unit(0.3, "cm"),
