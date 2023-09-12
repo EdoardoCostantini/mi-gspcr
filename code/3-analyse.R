@@ -186,11 +186,23 @@ fits <- lapply(
     }
 )
 
+# Save datasets for future processing
+saveRDS(fits, "../output/fits-results.rds")
+
+# Read the data
+fits <- readRDS("../output/fits-results.rds")
+
 # Pool GSPCR
 pools <- lapply(
     fits[1:2],
     pool
 )
+
+# Save datasets for future processing
+saveRDS(pools, "../output/pooled-results.rds")
+
+# Read the data
+pools <- readRDS("../output/pooled-results.rds")
 
 # Define what to compare
 measures <- c("estimate", "ubar", "b", "t", "riv", "lambda", "fmi")
