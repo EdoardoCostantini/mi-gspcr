@@ -2,7 +2,7 @@
 # Objective: Describe missing values in the EVS data
 # Author:    Edoardo Costantini
 # Created:   2023-07-21
-# Modified:  2023-07-26
+# Modified:  2023-09-28
 # Notes: 
 
 # Load data --------------------------------------------------------------------
@@ -22,6 +22,12 @@ pm <- colMeans(is.na(EVS))
 # Percentage of missing values
 barplot(round(pm, 3) * 100)
 
+# Number of variables with missing values
+sum(cm != 0)
+
+# Range of pm for incomplete variables
+range(pm[cm != 0]) * 100
+
 # > Check Variables with high PM -----------------------------------------------
 pm[pm > .30]
 
@@ -34,6 +40,57 @@ pm[pm > .10 & pm < .30]
 
 # - all due to real missing values
 # - v276_r data for Great Britain and NL not available
+
+# > Check pm for variables in analysis model -----------------------------------
+
+# Define model variables
+model_amv <- c(
+    # Left / Right voting
+    lr = "v174_LR",
+
+    # Female
+    sex = "v225",
+
+    # Employment Status
+    SES = "v246_egp",
+
+    # Native attitudes (mean of itmes)
+    nativ_1 = "v185", # jobs
+    nativ_2 = "v186", # crime
+    nativ_3 = "v187", # strain on welfare
+
+    # Authoritarian Attitudes
+    # Low and order attitudes
+    strongL = "v145",
+    order = "v110",
+
+    # Political Interest
+    pol_1 = "v97",
+
+    # Political Action
+    pa_1 = "v98",
+    pa_2 = "v99",
+    pa_3 = "v100",
+    pa_4 = "v101",
+
+    # Covariates
+    age = "age_r3",
+    edu = "v243_ISCED_1",
+    mat = "v234",
+
+    # urb = v276_r
+    urb = "v276_r",
+
+    # Religiousness
+    rel = "v6",
+
+    # Denomination
+    denom = "v52_r"
+)
+
+# Average pm across the predictors 
+mean(pm[model_amv][-1])
+length(pm[model_amv][-1])
 
 # Missing data patterns --------------------------------------------------------
 

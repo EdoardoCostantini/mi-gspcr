@@ -16,6 +16,8 @@ library(dplyr)
 library(forcats) # for fct_collapse() function to recode factors
 library(lattice)
 library(gridExtra) # to arrange lattice plots
+library(ggplot2)
+library(patchwork)
 
 # Communicate versions of delicate packages to the user
 message(
