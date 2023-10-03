@@ -2,7 +2,7 @@
 # Objective: Study data to make decisions on the imputaiton model
 # Author:    Edoardo Costantini
 # Created:   2023-08-10
-# Modified:  2023-08-10
+# Modified:  2023-10-03
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -22,6 +22,9 @@ meths <- rep(NA, ncol(EVS))
 
 # Give it the variables names
 names(meths) <- colnames(EVS)
+
+# Summary of variable types
+sapply(var_types, length)
 
 # Binary data ------------------------------------------------------------------
 
