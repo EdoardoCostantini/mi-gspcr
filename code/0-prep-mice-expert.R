@@ -171,7 +171,7 @@ minpuc <- .5
 p <- md.pairs(EVS)
 
 # Compute percentage of usable cases
-puc <- p$mr / p$mr + p$mm
+puc <- p$mr / (p$mr + p$mm)
 
 # Relationship types -----------------------------------------------------------
 
@@ -448,7 +448,7 @@ maxc <- pmax(mats$mat_asso, mats$mat_relno)
 
 # Study the predictors
 par(mfrow = c(2, 2))
-lapply(1:ncol(maxc), function(j) {
+lapply(which(colnames(maxc) %in% var_types$cou), function(j) {
     barplot(
         tail(sort(sqrt(maxc[j, -j])), 30),
         main = colnames(maxc)[j],
