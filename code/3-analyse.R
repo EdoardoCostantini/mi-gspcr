@@ -145,6 +145,12 @@ long_list_derived <- lapply(
                     .christian = levels(dat$v52_r)[1],
                     .other = levels(dat$v52_r)[3:5]
                 )
+                Country <- factor(
+                    country,
+                    levels = levels(dat$country),
+                    labels = paste0(".", levels(dat$country)),
+                    ordered = FALSE
+                )
             }
         )
     }
@@ -181,7 +187,9 @@ fits <- lapply(
                 Married +
                 Urb +
                 Attendance +
-                Denom)
+                Denom + 
+                Country
+                )
         )
     }
 )
