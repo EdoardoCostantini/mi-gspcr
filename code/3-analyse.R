@@ -222,15 +222,18 @@ measures_compared <- lapply(measures, function(x) {
 # Give meaningful names
 names(measures_compared) <- measures
 
+# Identify parameters estimated with both MI and CC
+index_parms <- measures_compared$estimate$term %in% names(estiamtes$cc[, "Estimate"])
+
 # Append CC analysis Estimates
 cbind(
-    measures_compared$estimate,
+    measures_compared$estimate[index_parms, ],
     CC = estiamtes$cc[, "Estimate"]
 )
 
 # Append CC analysis Standard errors
 cbind(
-    measures_compared$ubar,
+    measures_compared$ubar[index_parms, ],
     CC = estiamtes$cc[, "Std. Error"]
 )
 
