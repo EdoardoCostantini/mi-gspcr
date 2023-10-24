@@ -2,7 +2,7 @@
 # Objective: Analysis of pooled data
 # Author:    Edoardo Costantini
 # Created:   2023-08-17
-# Modified:  2023-09-12
+# Modified:  2023-10-24
 # Notes:
 
 # Load Packages
@@ -243,7 +243,8 @@ estimates_mi <- lapply(
         # Attach method name
         estiamtes[[x]] <- cbind(
             method = factor(x),
-            estiamtes[[x]]
+            estiamtes[[x]],
+            SE = sqrt(estiamtes[[x]]$t)
         )
 
         # Reshape for ggplot
@@ -258,7 +259,7 @@ estimates_mi_gg_shape <- do.call(rbind, estimates_mi)
 estimates_cc <- data.frame(estiamtes$cc)
 
 # Harmonize names of CC results
-colnames(estimates_cc) <- c("estimate", "t", "tvalue", "pvalue")
+colnames(estimates_cc) <- c("estimate", "SE", "tvalue", "pvalue")
 
 # Attach a term column
 estimates_cc <- cbind(
@@ -294,7 +295,7 @@ gg_shape <- readRDS("../output/estimates-gg-shape.rds")
 # Plots ------------------------------------------------------------------------
 
 # Decide what to plot
-parameters <- c("estimate", "t", "ubar", "b", "fmi")
+parameters <- c("estimate", "t", "ubar", "b", "SE")
 parameter <- "estimate"
 terms <- levels(gg_shape$term)[-1]
 
