@@ -2,7 +2,7 @@
 # Objective: Analysis of pooled data
 # Author:    Edoardo Costantini
 # Created:   2023-08-17
-# Modified:  2023-10-24
+# Modified:  2023-10-25
 # Notes:
 
 # Load Packages
@@ -288,6 +288,9 @@ estimates_gg_shape <- rbind(
     estimates_mi_gg_shape,
     estimates_cc_gg_shape
 )
+
+# Give the methods a good name
+levels(estimates_gg_shape$method) <- c("MI-GSPCR", "MI-Expert", "CC")
 
 # Save datasets for future processing
 saveRDS(estimates_gg_shape, "../output/estimates-gg-shape.rds")
