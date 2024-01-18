@@ -83,7 +83,7 @@ time_start <- Sys.time()
 mids_mi_expert <- mice(
     data = EVS,
     m = 1,
-    maxit = 20,
+    maxit = 50,
     method = meth,
     predictorMatrix = predMat,
     seed = 20230822
@@ -108,7 +108,7 @@ mids_mi_expert <- futuremice(
     # General mice arguments
     data = EVS,
     m = 5,
-    maxit = 20,
+    maxit = 50,
     predictorMatrix = predMat,
     method = meth
 )
