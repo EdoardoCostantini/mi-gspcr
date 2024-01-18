@@ -75,6 +75,11 @@ saveRDS(R_session, paste0("../input/", date_time, "-R-session.rds"))
 # Imputation -------------------------------------------------------------------
 
 # Sequential MICE --------------------------------------------------------------
+
+# Store start time
+time_start <- Sys.time()
+
+# Run mice
 mids_mi_expert <- mice(
     data = EVS,
     m = 1,
@@ -87,7 +92,13 @@ mids_mi_expert <- mice(
 # Continue an interrupted sequential mice
 mids_mi_expert_cont <- mice.mids(mids_mi_expert, maxit = 30)
 
+# Store end time
+end_time <- Sys.time()
+
 # Parallel MICE ----------------------------------------------------------------
+
+# Store start time
+time_start <- Sys.time()
 
 # Parellel MICE run
 mids_mi_expert <- futuremice(
@@ -102,8 +113,19 @@ mids_mi_expert <- futuremice(
     method = meth
 )
 
+# Store end time
+time_end <- Sys.time()
+
 # Save mids object
 saveRDS(
     object = mids_mi_expert,
     file = paste0("../output/", date_time, "-mids-mi-expert.rds")
+)
+
+# Store the imputation time ----------------------------------------------------
+
+# Save mids object
+saveRDS(
+    object = time_start - time_end,
+    file = paste0("../output/", date_time, "-mids-mi-expert-time.rds")
 )

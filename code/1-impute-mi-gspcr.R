@@ -74,6 +74,9 @@ saveRDS(R_session, paste0("../input/", date_time, "-R-session.rds"))
 
 # Sequential MICE ----------------------------------------------------------------
 
+# Store start time
+time_start <- Sys.time()
+
 # Sequential MICE run
 mids_mi_gspcr <- mice(
     # General mice arguments
@@ -96,7 +99,13 @@ mids_mi_gspcr <- mice(
 # Continue an interrupted sequential mice
 mids_mi_gspcr_cont <- mice.mids(mids_mi_gspcr, maxit = 30)
 
+# Store end time
+end_time <- Sys.time()
+
 # Parallel MICE ----------------------------------------------------------------
+
+# Store start time
+time_start <- Sys.time()
 
 # Parellel MICE run
 mids_mi_gspcr <- futuremice(
@@ -119,11 +128,19 @@ mids_mi_gspcr <- futuremice(
     K = 1
 )
 
+# Store end time
+time_end <- Sys.time()
+
 # Save mids object
 saveRDS(
     object = mids_mi_gspcr,
     file = paste0("../output/", date_time, "-mids-mi-gspcr.rds")
 )
 
-# Make a meaningful covergence plot
-plot(imp1)
+# Store the imputation time ----------------------------------------------------
+
+# Save mids object
+saveRDS(
+    object = time_end - time_start,
+    file = paste0("../output/", date_time, "-mids-mi-gspcr-time.rds")
+)
