@@ -2,7 +2,7 @@
 # Objective: Study data to make decisions on how to impute the data
 # Author:    Edoardo Costantini
 # Created:   2023-08-08
-# Modified:  2023-08-21
+# Modified:  2024-01-26
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -245,7 +245,6 @@ for (j in 1:ncol(EVS)) {
     
     # Put in matrix
     mat_relno[j, names(ascores)] <- ascores^2
-    mat_relno[names(ascores), j] <- ascores^2
 }
 
 # Close progress bar
@@ -438,7 +437,7 @@ barplot(sort(corMat[idx, -idx]))
 # Compare best predictors
 data.frame(
     R2 = names(tail(sort(sqrt(mats$mat_asso[idx, -idx])), 10)),
-    cor = names(tail(sort(v[idx, -idx]), 10))
+    cor = names(tail(sort(corMat[idx, -idx]), 10))
 )
 
 # Get the best -----------------------------------------------------------------
@@ -457,7 +456,7 @@ lapply(which(colnames(maxc) %in% var_types$cou), function(j) {
 })
 
 # Get best tot predictors
-pred_best <- apply(maxc, 2, function(j) names(tail(sort(j), 15)))
+pred_best <- apply(maxc, 1, function(j) names(tail(sort(j), 15)))
 
 # Predictor matrix -------------------------------------------------------------
 
