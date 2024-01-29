@@ -39,11 +39,13 @@ stripplot(mids_migspcr, age_r3 ~ .imp, pch = 20, cex = 2)
 
 # Read imptued data
 mids_miexpert <- readRDS("../output/20230829-100551-mids-mi-expert.rds")
+mids_miexpert <- readRDS("../output/20240126-234235-mids-mi-expert.rds")
 
 # Convergence checks
 plot(
     mids_miexpert,
-    var_types$ord[1:10]
+    c("v36", "v37", "v267", "v269", "v273"),
+    layout = c(2, 5)
 )
 
 # Density plots
