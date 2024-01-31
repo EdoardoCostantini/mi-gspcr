@@ -2,7 +2,7 @@
 
 ## Summary of project
 
-With this project, I want showc how the MI-GSPCR approach can be used to impute real survey data. In particular, I want to show how you can use it to simplify the imputation model specification step of multiple imputation while generating imputations of the same quality as the standard approach to selecting the predictors in the imputation model.
+With this project, I want to show how the MI-GSPCR approach can be used to impute real survey data. In particular, I want to show how you can use it to simplify the imputation model specification step of multiple imputation while generating imputations of the same quality as the standard approach to selecting the predictors in the imputation model.
 
 ## Replication
 
