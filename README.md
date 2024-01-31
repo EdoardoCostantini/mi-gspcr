@@ -2,25 +2,28 @@
 
 ## Summary of project
 
-With this project I want to tutorialise the imputation of missing data to showcase through the MI-GSPCR approach. In particular, I want to show how you can use it to simplify the imputation model specification step of multiple imputation. The choices that must be made are:
+With this project, I want showc how the MI-GSPCR approach can be used to impute real survey data. In particular, I want to show how you can use it to simplify the imputation model specification step of multiple imputation while generating imputations of the same quality as the standard approach to selecting the predictors in the imputation model.
 
-1. Model form (GLM link function) - This step stays the same
-2. Selection of the predictors - All predictors are kept, but the user can still make a few decisions:
-    1. Threshold types
-    2. Grid of threshold values
-    3. Tuning strategy
-        1. cross-validation
-        2. likelihood-based
-    4. Number of PCs
-        1. Fixed
-        2. Cross-validated
+## Replication
 
-After describing these choices in detail, I would like to present an application where we apply this method to the EVS data as is, with no synthetic data. The data should be imputed with the MI-GSPCR approach, with a guided description of how the decisions in point 2 were taken. The data should also be imputed based on a traditional mice imputation procedure and the steps taken to respond to step 2 should be explained clearly.
+To replicate the results of the study documented in this repository you should:
 
-## Folder contents
+1. Download this repository
+2. Request access and download the data from the [EVS website](https://europeanvaluesstudy.eu/methodology-data-documentation/data-downloads/)
+3. Run the `0-prep-install.R` script to install all the packages needed to run the code
+4. Run the `0-prep-EVS-data.R` script to prepare the EVS data.
+5. Run the imputation routines in scripts `1-impute-mi-expert.R` and `1-impute-mi-gspcr.R`.
+6. Run `2-diagnostics.R` and `3-analyse.R` to obtain results.
 
-### Output files
+## Project housekeeping
+
+### Output files record
+
+The results for the study are stored in the following files:
 
 - `20230815-221458-mids-mi-gspcr.rds` trail run of imputation with mi-gscpr method (`maxit = 5`)
-- `20230817-155605-mids-mi-gspcr.rds` main results of imputation with mi-gscpr method
-- `20230829-100551-mids-mi-expert.rds` main results of imputation with mi-expert method
+- `20230817-155605-mids-mi-gspcr.rds` main results of imputation with mi-gscpr method with 20 iterations
+- `20230829-100551-mids-mi-expert.rds` main results of imputation with mi-expert method with 20 iterations
+- `20240126-234235-mids-mi-expert.rds` main results of imputation with mi-expert method with 150 iterations
+
+These files are not stored on GitHub because of their size. They are available upon request.
