@@ -2,7 +2,7 @@
 # Objective: Study data to make decisions on how to impute the data
 # Author:    Edoardo Costantini
 # Created:   2023-08-08
-# Modified:  2024-01-26
+# Modified:  2024-02-02
 # Notes: 
 
 # Prepare environment ----------------------------------------------------------
@@ -23,9 +23,6 @@ EVS$country <- droplevels(EVS$country)
 
 # Load variable type map
 var_types <- readRDS("../input/var_types.rds")
-
-# Toy dataset
-# EVS <- EVS[, c("v1", "v2", "v9", "v10", "v54", "v55", "v279d_r", "v242", "country")]
 
 # Ad-hoc data prep -------------------------------------------------------------
 
