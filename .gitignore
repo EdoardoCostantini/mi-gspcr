@@ -39,6 +39,11 @@
 /input/rlib/*/
 /input/stopos-lines
 
+# Ignore pacakges except ones that are approved
+*.tar.gz
+!gspcr_0.9.2.93.tar.gz
+!mice_3.16.0.0009.tar.gz
+
 # > IDEs -----------------------------------------------------------------------
 
 # Ignore .idea folder
