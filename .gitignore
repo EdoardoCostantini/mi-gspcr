@@ -41,8 +41,8 @@
 
 # Ignore pacakges except ones that are approved
 *.tar.gz
-!gspcr_0.9.2.93.tar.gz
-!mice_3.16.0.0009.tar.gz
+!gspcr_0.9.5.tar.gz
+!mice_3.16.0.0012.tar.gz
 
 # > IDEs -----------------------------------------------------------------------
 
